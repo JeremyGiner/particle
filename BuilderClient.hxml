@@ -1,0 +1,15 @@
+# require haxe 3
+#_______________________________________________________________________________
+# Client compilation
+
+-lib pixijs
+-lib sweet.functor
+
+# Select directory
+-cp src
+-cp vendor
+
+# JavaScript target
+-js build\client\game.js
+
+-main particle.Main
