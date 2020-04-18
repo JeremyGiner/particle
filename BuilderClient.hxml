@@ -1,15 +1,40 @@
-# require haxe 3
+
 #_______________________________________________________________________________
 # Client compilation
 
+# Libraries
 -lib pixijs
 -lib sweet.functor
+
 
 # Select directory
 -cp src
 -cp vendor
 
+# Resource
+--resource src/particle/shader/grid_shader@grid_shader
+
 # JavaScript target
--js build\client\game.js
+-js build/client/game.js
 
 -main particle.Main
+
+#_______________________________________________________________________________
+# Test
+--next
+
+# Libraries
+-lib pixijs
+
+
+# Select directory
+-cp src
+-cp vendor
+
+# Resource
+--resource src/particle/shader/grid_shader@grid_shader
+
+# JavaScript target
+-js build/client/test.js
+
+-main particle.Test

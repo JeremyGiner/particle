@@ -1,4 +1,4 @@
-package particle.process;
+package particle.controller.process;
 import particle.model.Model;
 import particle.model.Particle;
 import particle.view.View;
@@ -6,6 +6,7 @@ import space.Vector2i;
 import sweet.functor.IProcedure;
 import haxe.IntTool;
 import particle.model.Direction;
+import particle.model.ParticleType;
 
 /**
  * ...
@@ -23,11 +24,28 @@ class Spawn implements IProcedure {
 		_oView = oView;
 		_iMax = 200;
 		_iStep = 1;
+		
+		
+		_oModel.addParticle(new Particle(
+			new Vector2i(25,25),
+			new Vector2i(),
+			ParticleType.generator
+		));
+		_oModel.addParticle(new Particle(
+			new Vector2i(31,30),
+			new Vector2i(),
+			ParticleType.wall_generator
+		));
+		_oModel.addParticle(new Particle(
+			new Vector2i(30,30),
+			new Vector2i(),
+			ParticleType.fabricator
+		));
 	}
 	
 	
 	public function process() {
-		
+		return;
 		var iDelta = _iMax - _oModel.getParticleCount();
 		if ( iDelta <= 0 )
 			return;
@@ -41,7 +59,6 @@ class Spawn implements IProcedure {
 				
 				
 			_oModel.addParticle( oParticle );
-			_oView.updateParticle( oParticle );
 		}
 	}
 	

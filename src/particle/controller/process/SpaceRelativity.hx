@@ -1,4 +1,4 @@
-package particle.process;
+package particle.controller.process;
 import sweet.functor.IProcedure;
 import particle.model.Model;
 import particle.model.Particle;

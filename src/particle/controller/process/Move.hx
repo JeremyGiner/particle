@@ -1,7 +1,7 @@
-package particle.process;
+package particle.controller.process;
 import haxe.ds.BalancedTree;
 import haxe.ds.IntMap;
-import haxe.ds.RedBlackTree;
+import particle.controller.tool.CollisionHandler;
 import particle.model.Model;
 import particle.model.Particle;
 import particle.view.View;
@@ -23,6 +23,8 @@ class Move implements IProcedure {
 	
 	var _iMaxSpeed :Int;
 	var _iCurrentSpeed :Int;
+	
+	var _oCollisionHandler :CollisionHandler;
 
 	public function new( oModel :Model, oView :View ) {
 		_oModel = oModel;
@@ -30,6 +32,8 @@ class Move implements IProcedure {
 		
 		_iMaxSpeed = 10;
 		_iCurrentSpeed = 1;
+		
+		_oCollisionHandler = new CollisionHandler( _oModel );
 	}
 
 	
@@ -45,7 +49,7 @@ class Move implements IProcedure {
 			//for ( oParticle  in a ) {
 				//_oModel.removeParticleoParticle move( oDirection, oParticle );
 			//}
-			for ( oParticle  in a ) {
+			for ( oParticle in a ) {
 				move( oDirection, oParticle );
 			}
 		}
@@ -53,51 +57,61 @@ class Move implements IProcedure {
 		if ( _iCurrentSpeed > _iMaxSpeed ) _iCurrentSpeed = 1;
 	}
 	
-	public function move( oDirection :Direction, oParticule :Particle) {
-		var oPosition = oParticule.getPosition().clone();
+	public function move( oDirection :Direction, oParticle :Particle) {
+		
+		// Check if partcile wasn't removed by previous calls
+		if( _oModel.getParticle( oParticle.getId() ) == null )
+			return;
+		
+		var oPosition = oParticle.getPosition().clone();
 		switch( oDirection ) {
 			
-			case RIGHT: //for ( i in 0...oParticule.getVelocity().x ) {
-				if ( oParticule.getVelocity().x < _iCurrentSpeed ) return;
+			case RIGHT: //for ( i in 0...oParticle.getVelocity().x ) {
+				if ( oParticle.getVelocity().x < _iCurrentSpeed ) return;
 				oPosition.x++;
-				//collisionCheck( oParticule, oPosition );
+				//collisionCheck( oParticle, oPosition );
 			//}
-			case LEFT: //for ( i in 0...Math.floor(Math.abs(oParticule.getVelocity().x)) ) {
-				if ( -oParticule.getVelocity().x < _iCurrentSpeed ) return;
+			case LEFT: //for ( i in 0...Math.floor(Math.abs(oParticle.getVelocity().x)) ) {
+				if ( -oParticle.getVelocity().x < _iCurrentSpeed ) return;
 				oPosition.x--;
-				//collisionCheck( oParticule, oPosition );
+				//collisionCheck( oParticle, oPosition );
 			//}
-			case UP:// for ( i in 0...oParticule.getVelocity().y ) {
-				if ( oParticule.getVelocity().y < _iCurrentSpeed ) return;
+			case UP:// for ( i in 0...oParticle.getVelocity().y ) {
+				if ( oParticle.getVelocity().y < _iCurrentSpeed ) return;
 				oPosition.y++;
-				//collisionCheck( oParticule, oPosition );
+				//collisionCheck( oParticle, oPosition );
 			//}
-			case DOWN:// for ( i in 0...Math.floor(Math.abs(oParticule.getVelocity().y) )) {
-				if ( -oParticule.getVelocity().y < _iCurrentSpeed ) return;
+			case DOWN:// for ( i in 0...Math.floor(Math.abs(oParticle.getVelocity().y) )) {
+				if ( -oParticle.getVelocity().y < _iCurrentSpeed ) return;
 				oPosition.y--;
-				//collisionCheck( oParticule, oPosition );
+				//collisionCheck( oParticle, oPosition );
 			//}
 		}
-		if ( collisionCheck( oParticule, oPosition ) )
+		if ( collisionCheck( oParticle, oPosition ) )
 			return;
-		_oModel.setParticlePosition( oParticule, oPosition );
-		_oView.updateParticle( oParticule );
+		
+		_oModel.setParticlePosition( oParticle, oPosition );
+		_oView.updateParticle( oParticle );
 	}
 	
 	public function collisionCheck( oParticle :Particle, oPosition :Vector2i ) {
 		var o = _oModel.getParticleByPosition( oPosition );
 		if ( o == null )
 			return false;
-		return true;
-		//trace('collision' );
-		//
-		//_oModel.removeParticle( o );
-		//_oView.removeParticle( o );
-		//
-		//_oModel.setParticleVelocity( 
-			//oParticle, 
-			//oParticle.getVelocity().vector_add( o.getVelocity() ) 
-		//);
+			
+		// 
+		_oCollisionHandler.handle( oParticle, o );
+		
+		// Roll back move if particle was removed or path hasn't been cleared
+		if ( 
+			_oModel.getParticleByPosition( oPosition ) != null 
+			||  _oModel.getParticle( oParticle.getId() ) == null
+		) {
+			oParticle.setVelocity( new Vector2i() );// to do bump animation
+			return true;
+		}
+		
+		return false;
 	}
 	
 	public function sortingFunc( oDirection :Direction ) {

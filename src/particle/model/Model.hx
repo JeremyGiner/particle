@@ -1,15 +1,17 @@
 package particle.model;
+import haxe.CallStack;
+import haxe.ds.BalancedTree;
 import haxe.ds.BalancedTreeFunctor;
 import haxe.ds.IntMap;
 import haxe.ds.Map;
 import haxe.ds.BalancedTreeFunctor;
-import js.Lib;
 import particle.model.Particle;
 import space.Vector2i;
 import particle.tool.UniqueIdGenerator;
 import sweet.functor.comparator.IComparator;
 import particle.model.Direction.DirectionTool;
 import haxe.Constraints.IMap;
+import trigger.EventListener;
 
 
 /**
@@ -26,8 +28,20 @@ class Model {
 	var _mParticle :BalancedTreeFunctor<Int,Particle>;
 	var _mParticleListByVelDir :Map<Direction,IMap<Int,Particle>>;
 	var _mParticleByPosition :IMap<Vector2i,Particle>;
+	var _mParticleByType :IMap<ParticleType,IMap<Int,Particle>>;
+	
+	//var oOutBoundIndexer :IIndexer;
+	
+	
+	public var onCreate :EventListener<Particle>;
+	public var onDelete :EventListener<Particle>;
+	public var onUpdate :EventListener<ParticleUpdateEvent>;
 
 	public function new() {
+		
+		onCreate = new EventListener();
+		onDelete = new EventListener();
+		onUpdate = new EventListener();
 		
 		_oGrid = new Grid(100,50);
 		_oIdGen = new UniqueIdGenerator();
@@ -40,7 +54,10 @@ class Model {
 		_mParticleListByVelDir.set( Direction.LEFT, new Map<Int,Particle>() );// TODO use sorted list by valocity
 		_mParticleListByVelDir.set( Direction.RIGHT, new Map<Int,Particle>() );// TODO use sorted list by valocity
 		_mParticleByPosition = new BalancedTreeFunctor( new Vector2iComp() );
+		_mParticleByType = new BalancedTree();
 		//_mParticleByPosition = new Map();
+		
+		
 	}
 	
 //_____________________________________________________________________________
@@ -69,6 +86,14 @@ class Model {
 		return _mParticleListByVelDir.get( oDir );
 	}
 	
+	public function getParticleByType( oType :ParticleType ) {
+		
+		if ( !_mParticleByType.exists( oType ) )
+			_mParticleByType.set(oType,new BalancedTree<Int,Particle>()  );
+		return _mParticleByType.get( oType );
+		
+	}
+	
 //_____________________________________________________________________________
 //    Modifier
 
@@ -76,7 +101,7 @@ class Model {
 		oParticle.setId( _oIdGen.generate() );
 		
 		
-		// Index
+		// Update indexer
 		_mParticle.set( oParticle.getId(), oParticle );
 		for(  oDirection in DirectionTool.getByVelocity( oParticle.getVelocity() ) ) {
 			_mParticleListByVelDir
@@ -84,12 +109,21 @@ class Model {
 				.set( oParticle.getId(), oParticle )
 			;
 		}
-		var i = Lambda.count(_mParticleByPosition);
 		_mParticleByPosition.set( oParticle.getPosition(), oParticle );
-		if ( Lambda.count(_mParticleByPosition) != i + 1 )
-			throw '!!';
-		if ( _mParticleByPosition.get( oParticle.getPosition().clone() ) != oParticle )
-			throw '!!';
+		
+		if ( !_mParticleByType.exists( oParticle.getType() ) )
+			_mParticleByType.set( 
+				oParticle.getType(),
+				new BalancedTree<Int,Particle>() 
+			);
+		_mParticleByType
+			.get( oParticle.getType() )
+			.set(oParticle.getId(), oParticle )
+		;
+		
+		
+		// Dispatch event
+		onCreate.trigger( oParticle );
 	}
 	
 	public function removeParticle( oParticle :Particle ) {
@@ -98,6 +132,15 @@ class Model {
 			trace('Warning: trying to remove particle with no identity');
 			return;
 		}
+		//if ( !_mParticle.exists( oParticle.getId() ) ) {
+			//trace('Warning: trying to remove particle twice');
+			//return;
+			//
+		//}
+		trace('removing #'+oParticle.getId());
+		trace(CallStack.callStack());
+		
+		
 		// Remove from indexer
 		_mParticle.remove( oParticle.getId() );
 		for(  oDirection in DirectionTool.getAll() ) {
@@ -107,6 +150,9 @@ class Model {
 			;
 		}
 		_mParticleByPosition.remove( oParticle.getPosition() );
+		_mParticleByType.get(oParticle.getType()).remove( oParticle.getId() );
+		
+		onDelete.trigger( oParticle );
 	}
 	
 	public function setParticleVelocity( oParticle :Particle, oVector :Vector2i ) {
@@ -125,25 +171,34 @@ class Model {
 		}
 	}
 	public function setParticlePosition( oParticle :Particle, oVector :Vector2i ) {
-		if ( _mParticleByPosition.exists( oVector ) )
-			throw '!!!';
-		if ( Lambda.count(_mParticleByPosition ) !=Lambda.count( _mParticle ) ) {
-			trace(_mParticleByPosition.toString());
-			trace(_mParticle.toString());
-			throw '!!!';
-		}
+
 		_mParticleByPosition.remove( oParticle.getPosition() );
-		
-		if ( Lambda.count(_mParticleByPosition ) !=Lambda.count( _mParticle ) -1  ) {
-			trace(_mParticleByPosition.toString());
-			trace(_mParticle.toString());
-			throw '!!!';
-		}
-		
 		oParticle.setPosition(oVector);
 		_mParticleByPosition.set( oParticle.getPosition(), oParticle );
 		
+		onUpdate.trigger({particle: oParticle, field: 'position', });
+	}
+	
+	public function setParticleType( oParticle :Particle, oType :ParticleType ) {
+		if ( oParticle.getType() == oType )
+			return;
 		
+		_mParticleByType.get(oParticle.getType()).remove(oParticle.getId());
+		oParticle.setType( oType );
+		if ( !_mParticleByType.exists( oParticle.getType() ) )
+			_mParticleByType.set( 
+				oParticle.getType(),
+				new BalancedTree<Int,Particle>() 
+			);
+		_mParticleByType.get(oParticle.getType()).set( oParticle.getId(), oParticle );
+		
+		onUpdate.trigger({particle: oParticle, field: 'type', });
+	}
+	
+	public function addParticleEnergy( oParticle :Particle, i :Int = 1 ) {
+		oParticle.addEnergy( i );
+		
+		onUpdate.trigger({particle: oParticle, field: 'energy', });
 	}
 }
 
@@ -160,4 +215,9 @@ class Vector2iComp implements IComparator<Vector2i> {
 		return a.toString() > b.toString() ? 1 : -1;
 		//return a.x > b.x && a.y > b.y ? 1 : -1;
 	}
+}
+
+typedef ParticleUpdateEvent = {
+	var particle :Particle;
+	var field :String;
 }

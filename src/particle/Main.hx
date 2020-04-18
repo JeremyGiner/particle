@@ -1,16 +1,26 @@
 package particle;
 
-import haxe.ds.RedBlackTree;
-import particle.process.SpaceRelativity;
+import js.Function;
+import js.Lib;
+import particle.controller.DragDrop;
+import particle.controller.Rotate;
+import particle.controller.Zoom;
+import particle.controller.process.FabricatorBehavior;
+import particle.controller.process.GeneratorSpawnBehavior;
+import particle.controller.process.PusherBehavior;
+import particle.controller.process.RouterBehavior;
+import particle.controller.process.SpaceRelativity;
+import particle.controller.process.WallGeneratorBehavior;
 import particle.view.View;
 import particle.model.Model;
-import particle.process.Spawn;
+import particle.controller.process.Spawn;
 import pixi.plugins.app.Application;
 import pixi.core.graphics.Graphics;
+import pixi.interaction.InteractionEvent;
 
 import pixi.core.sprites.Sprite;
 import js.Browser;
-import particle.process.Move;
+import particle.controller.process.Move;
 import sweet.functor.IProcedure;
 
 class Main extends Application {
@@ -29,22 +39,29 @@ class Main extends Application {
 		position = Application.POSITION_FIXED;
 		width = Browser.window.innerWidth;
 		height = Browser.window.innerHeight;
-		backgroundColor = 0x006666;
-		transparent = true;
+		backgroundColor = 0x000000;
+		//transparent = true;
 		antialias = false;
 		onUpdate = _animate;
 		super.start();
 		
 		
 		_oModel = new Model();
-		_oView = new View( stage);
+		_oView = new View( _oModel, stage, this.renderer.plugins.interaction);
 		_aProcess = [
 			new Move( _oModel, _oView ), 
 			new Spawn( _oModel, _oView ), 
-			new SpaceRelativity( _oModel, _oView ), 
+			//new SpaceRelativity( _oModel, _oView ),
+			new GeneratorSpawnBehavior( _oModel, _oView ),
+			new PusherBehavior( _oModel, _oView ),
+			new RouterBehavior( _oModel, _oView ),
+			new WallGeneratorBehavior( _oModel, _oView ),
+			new FabricatorBehavior( _oModel, _oView ),
 		];
 
-		
+		new DragDrop( _oModel, _oView );
+		new Zoom( _oView );
+		new Rotate(_oModel, _oView );
 		//var oTexture = Texture.from("asset/1.png");
 		//_bunny = new Sprite(oTexture);
 		//_bunny.anchor.set(0.5);
@@ -66,17 +83,24 @@ class Main extends Application {
 			//stage.addChild(_graphic);
 		//}
 		//}
-		
-		var timer = new haxe.Timer(50); // 1000ms delay
-		timer.run = function() {
+		trace('setting up');
+		var bProcessing = false;
+		var t = null;
+		t = Browser.window.setInterval(function() {
+			if ( bProcessing == true )
+				trace('[WARNING] skipping processing');
+			bProcessing = true;
 			try {
 				for ( oProcess in _aProcess ) 
 					oProcess.process();
 			} catch ( e :Dynamic ) {
-				timer.stop();
+				Browser.window.clearInterval(t);
 				throw e;
 			}
-		}
+			bProcessing = false;
+		},50);
+		//var timer = new haxe.Timer(1000); // 1000ms delay
+		//timer.run = 
 	}
 
 	function _animate(e:Float) {
@@ -93,4 +117,6 @@ class Main extends Application {
 	static function main() {
 		new Main();
 	}
+	
+	
 }

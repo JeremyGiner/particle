@@ -5,3 +5,51 @@ mash together
 	- mash direction (vertical horizontal)
 
 center of it all
+
+move
+	sort particle by x / y / -x / -y
+
+________________________
+
+COMPONENT
+matter
+energy manipulator
+direction
+rotation
+creation
+fire
+space
+
+
+ENERGY MANIPULATION
+burner (turret + splitter)
+generator ( spawner + )
+1 redirect ( direction + energy )
+2 multiplexer (redirecter + rotator, priority?)
+storage ( space + energy )
+
+
+MATTER MANIPULATION
+belt (left / right )
+spawner ( creation +  )
+1 rotator (rotation + space, force to face a direction)
+1 mixer (  )
+spliter ( left + right)
+sensor ( emmit energy when touched )
+bounder ()
+propulsor ()
+
+
+OTHER
+1 wall ( matter + space)
+1 turret (fire + direction)
+score
+
+
+
+TRANSITION
+energy
+fire
+
+ENEMY
+chaos
