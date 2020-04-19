@@ -59,7 +59,7 @@ class Main extends Application {
 			new FabricatorBehavior( _oModel, _oView ),
 		];
 
-		new DragDrop( _oModel, _oView );
+		new DragDrop( _oModel, _oView, cast _aProcess[0] );
 		new Zoom( _oView );
 		new Rotate(_oModel, _oView );
 		//var oTexture = Texture.from("asset/1.png");
@@ -90,13 +90,13 @@ class Main extends Application {
 			if ( bProcessing == true )
 				trace('[WARNING] skipping processing');
 			bProcessing = true;
-			try {
+			//try {
 				for ( oProcess in _aProcess ) 
 					oProcess.process();
-			} catch ( e :Dynamic ) {
-				Browser.window.clearInterval(t);
-				throw e;
-			}
+			//} catch ( e :Dynamic ) {
+				//Browser.window.clearInterval(t);
+				//throw e;
+			//}
 			bProcessing = false;
 		},50);
 		//var timer = new haxe.Timer(1000); // 1000ms delay

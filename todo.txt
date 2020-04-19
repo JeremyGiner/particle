@@ -6,8 +6,12 @@ mash together
 
 center of it all
 
-move
-	sort particle by x / y / -x / -y
+menu
+	game speed
+	particle selection
+
+drag drop 
+	pause on drag
 
 ________________________
 

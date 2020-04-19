@@ -27,7 +27,8 @@ class ATargeterBehavior extends Controller implements IProcedure {
 				)
 			;
 			var oTarget = _oModel.getParticleByPosition( oPushPosition );
-			targetProcess( oTarget, oDirectionVector );
+			if ( !targetProcess( oTarget, oDirectionVector ) )
+				continue;
 			
 			_oModel.addParticleEnergy( oParticle, -1 );
 		}
@@ -40,8 +41,9 @@ class ATargeterBehavior extends Controller implements IProcedure {
 		
 	}
 	
-	public function targetProcess( oTarget :Particle, oDirectionVector :Vector2i  ) {
+	public function targetProcess( oTarget :Particle, oDirectionVector :Vector2i  ) :Bool {
 		throw 'override me';
+		return false;
 	}
 	
 }

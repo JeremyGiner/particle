@@ -12,11 +12,12 @@ class FabricatorBehavior extends ATargeterBehavior {
 	
 	override public function targetProcess( oTarget :Particle, oDirectionVector :Vector2i ) {
 		if ( oTarget == null )
-			return;
+			return false;
 		_oModel.setParticleType( 
 			oTarget, 
 			getNextType( oTarget.getType() )
 		);
+		return true;
 	}
 	
 	override public function getType() :ParticleType {

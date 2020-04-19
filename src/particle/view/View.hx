@@ -19,6 +19,8 @@ import trigger.EventListener;
  */
 class View {
 	
+	var _oModel :Model;
+	
 	var _oStage :Container;
 	var _mParticleView :IntMap<ParticleView>;
 	var _lUpdateStack :List<Particle>;
@@ -28,13 +30,13 @@ class View {
 	public var onParticleDragTo :EventListener<DragTo>;
 	
 	public function new( oModel :Model, oStage :Container, oInteractionManager :InteractionManager  ) {
-		
+		_oModel = oModel;
 		oModel.onCreate.add( this.updateParticle  );
 		oModel.onUpdate.add( function( oEvent :ParticleUpdateEvent ) {
 			
 			this.updateParticle(oEvent.particle);
 		});
-		oModel.onDelete.add( this.updateParticle );
+		oModel.onDelete.add( this.removeParticle );
 		_oStage = oStage;
 		_oStage.scale.x = 10;
 		_oStage.scale.y = 10;
@@ -94,12 +96,20 @@ class View {
 	
 	public function removeParticle( oParticle :Particle ) {
 		
+		// Debug
+		if ( _oModel.getCount()+1 != Lambda.count(_mParticleView) )
+			throw '!!';
+		
 		if ( !_mParticleView.exists( oParticle.getId() ) )
 			return;
 		_oStage.removeChild(
 			_mParticleView.get( oParticle.getId() ).getContainer()
 		);
 		_mParticleView.remove( oParticle.getId() );
+		
+		// Debug
+		if ( _oModel.getCount() != Lambda.count(_mParticleView) )
+			throw '!!';
 	}
 	
 	public function update() {

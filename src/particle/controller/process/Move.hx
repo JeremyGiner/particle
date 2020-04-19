@@ -1,15 +1,20 @@
 package particle.controller.process;
-import haxe.ds.BalancedTree;
-import haxe.ds.IntMap;
+import haxe.ds.List;
 import particle.controller.tool.CollisionHandler;
 import particle.model.Model;
 import particle.model.Particle;
+import particle.model.ParticleType;
 import particle.view.View;
 import space.Vector2i;
 import particle.model.Direction;
 import sweet.functor.IProcedure;
 import haxe.ds.ArraySort;
 
+
+typedef PairParticleVector = {
+	var particle :Particle;
+	var vector :Vector2i;
+}
 
 /**
  * ...
@@ -25,8 +30,12 @@ class Move implements IProcedure {
 	var _iCurrentSpeed :Int;
 	
 	var _oCollisionHandler :CollisionHandler;
+	
+	var _lUserMove :List<PairParticleVector>;
 
 	public function new( oModel :Model, oView :View ) {
+		_lUserMove = new List();
+		
 		_oModel = oModel;
 		_oView = oView;
 		
@@ -35,10 +44,28 @@ class Move implements IProcedure {
 		
 		_oCollisionHandler = new CollisionHandler( _oModel );
 	}
+	
+	public function addUserMove( oParticle :Particle, oPos :Vector2i ) {
+		_lUserMove.add({particle: oParticle, vector: oPos });
+	}
 
 	
 	public function process() {
 		
+		var oPair :PairParticleVector;
+		while ( (oPair = _lUserMove.pop()) != null ) {
+			
+			var oParticle = oPair.particle;
+			
+			// Check if partcile wasn't removed by previous calls
+			if( _oModel.getParticle( oParticle.getId() ) == null )
+				return;
+			
+			if ( collisionCheck( oParticle, oPair.vector ) )
+				return;
+			
+			_oModel.setParticlePosition( oParticle, oPair.vector );
+		}
 		
 		// Get all 
 		for ( oDirection in DirectionTool.getAll() ) { 
@@ -91,7 +118,6 @@ class Move implements IProcedure {
 			return;
 		
 		_oModel.setParticlePosition( oParticle, oPosition );
-		_oView.updateParticle( oParticle );
 	}
 	
 	public function collisionCheck( oParticle :Particle, oPosition :Vector2i ) {
@@ -102,12 +128,22 @@ class Move implements IProcedure {
 		// 
 		_oCollisionHandler.handle( oParticle, o );
 		
+		// bump
+		if ( 
+			_oModel.getParticleByPosition( oPosition ) != null 
+			&&  _oModel.getParticle( oParticle.getId() ) != null
+		) {
+			if ( oParticle.getType() == ParticleType.energy_echo )
+				throw '!!!!';
+			_oModel.setParticleVelocity( oParticle, new Vector2i() );// todo: bump animation
+		}
+		
 		// Roll back move if particle was removed or path hasn't been cleared
 		if ( 
 			_oModel.getParticleByPosition( oPosition ) != null 
 			||  _oModel.getParticle( oParticle.getId() ) == null
 		) {
-			oParticle.setVelocity( new Vector2i() );// to do bump animation
+			
 			return true;
 		}
 		
@@ -119,16 +155,16 @@ class Move implements IProcedure {
 		switch( oDirection ) {
 			
 			case RIGHT: return function( a :Particle, b :Particle ) {
-				return a.getVelocity().x - b.getVelocity().x;
+				return b.getPosition().x - a.getPosition().x;
 			}
 			case LEFT: return function( a :Particle, b :Particle ) {
-				return b.getVelocity().x - a.getVelocity().x;
+				return a.getPosition().x - b.getPosition().x;
 			}
 			case UP: return function( a :Particle, b :Particle ) {
-				return a.getVelocity().y - b.getVelocity().y;
+				return b.getPosition().y - a.getPosition().y;
 			}
 			case DOWN: return function( a :Particle, b :Particle ) {
-				return b.getVelocity().y - a.getVelocity().y;
+				return a.getPosition().y - b.getPosition().y;
 			}
 		}
 	}

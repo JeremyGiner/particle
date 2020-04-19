@@ -13,7 +13,7 @@ class RouterBehavior extends Controller implements IProcedure {
 
 	public function process() {
 		
-		var a = _oModel.getParticleByType( ParticleType.pusher );
+		var a = _oModel.getParticleByType( ParticleType.redirect );
 		for ( oParticle in a ) {
 			
 			if ( oParticle.getEnergy() == 0 )// TODO: use indexer

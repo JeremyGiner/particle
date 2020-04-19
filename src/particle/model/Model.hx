@@ -94,6 +94,10 @@ class Model {
 		
 	}
 	
+	public function getCount() {
+		return Lambda.count(_mParticle);
+	}
+	
 //_____________________________________________________________________________
 //    Modifier
 
