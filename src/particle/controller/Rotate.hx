@@ -8,9 +8,6 @@ import particle.model.Model;
 import particle.model.Particle;
 import particle.view.ParticleView;
 import particle.view.View;
-import pixi.interaction.InteractionEvent;
-import pixi.interaction.InteractionManager;
-import space.Vector2i;
 
 /**
  * ...

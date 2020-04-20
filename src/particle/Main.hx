@@ -3,10 +3,13 @@ package particle;
 import js.Function;
 import js.Lib;
 import particle.controller.DragDrop;
+import particle.controller.Presenter;
 import particle.controller.Rotate;
 import particle.controller.Zoom;
 import particle.controller.process.FabricatorBehavior;
 import particle.controller.process.GeneratorSpawnBehavior;
+import particle.controller.process.MapBound;
+import particle.controller.process.MultiplexerBehavior;
 import particle.controller.process.PusherBehavior;
 import particle.controller.process.RouterBehavior;
 import particle.controller.process.SpaceRelativity;
@@ -48,7 +51,11 @@ class Main extends Application {
 		
 		_oModel = new Model();
 		_oView = new View( _oModel, stage, this.renderer.plugins.interaction);
+		
+		
+		new Presenter( _oModel, _oView );
 		_aProcess = [
+			new MapBound( _oModel, _oView ), 
 			new Move( _oModel, _oView ), 
 			new Spawn( _oModel, _oView ), 
 			//new SpaceRelativity( _oModel, _oView ),
@@ -57,11 +64,14 @@ class Main extends Application {
 			new RouterBehavior( _oModel, _oView ),
 			new WallGeneratorBehavior( _oModel, _oView ),
 			new FabricatorBehavior( _oModel, _oView ),
+			new MultiplexerBehavior( _oModel, _oView ),
 		];
 
 		new DragDrop( _oModel, _oView, cast _aProcess[0] );
 		new Zoom( _oView );
 		new Rotate(_oModel, _oView );
+		
+		
 		//var oTexture = Texture.from("asset/1.png");
 		//_bunny = new Sprite(oTexture);
 		//_bunny.anchor.set(0.5);

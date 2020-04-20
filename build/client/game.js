@@ -1305,16 +1305,17 @@ var particle_Main = function() {
 	pixi_plugins_app_Application.prototype.start.call(this);
 	this._oModel = new particle_model_Model();
 	this._oView = new particle_view_View(this._oModel,this.stage,this.renderer.plugins.interaction);
-	this._aProcess = [new particle_controller_process_Move(this._oModel,this._oView),new particle_controller_process_Spawn(this._oModel,this._oView),new particle_controller_process_GeneratorSpawnBehavior(this._oModel,this._oView),new particle_controller_process_PusherBehavior(this._oModel,this._oView),new particle_controller_process_RouterBehavior(this._oModel,this._oView),new particle_controller_process_WallGeneratorBehavior(this._oModel,this._oView),new particle_controller_process_FabricatorBehavior(this._oModel,this._oView)];
+	new particle_controller_Presenter(this._oModel,this._oView);
+	this._aProcess = [new particle_controller_process_MapBound(this._oModel,this._oView),new particle_controller_process_Move(this._oModel,this._oView),new particle_controller_process_Spawn(this._oModel,this._oView),new particle_controller_process_GeneratorSpawnBehavior(this._oModel,this._oView),new particle_controller_process_PusherBehavior(this._oModel,this._oView),new particle_controller_process_RouterBehavior(this._oModel,this._oView),new particle_controller_process_WallGeneratorBehavior(this._oModel,this._oView),new particle_controller_process_FabricatorBehavior(this._oModel,this._oView),new particle_controller_process_MultiplexerBehavior(this._oModel,this._oView)];
 	new particle_controller_DragDrop(this._oModel,this._oView,this._aProcess[0]);
 	new particle_controller_Zoom(this._oView);
 	new particle_controller_Rotate(this._oModel,this._oView);
-	console.log("src/particle/Main.hx:86:","setting up");
+	console.log("src/particle/Main.hx:96:","setting up");
 	var bProcessing = false;
 	var t = null;
 	t = window.setInterval(function() {
 		if(bProcessing == true) {
-			console.log("src/particle/Main.hx:91:","[WARNING] skipping processing");
+			console.log("src/particle/Main.hx:101:","[WARNING] skipping processing");
 		}
 		bProcessing = true;
 		var _g = 0;
@@ -1364,6 +1365,25 @@ particle_controller_DragDrop.__name__ = true;
 particle_controller_DragDrop.__super__ = particle_controller_Controller;
 particle_controller_DragDrop.prototype = $extend(particle_controller_Controller.prototype,{
 });
+var particle_controller_Presenter = function(oModel,oView) {
+	particle_controller_Controller.call(this,oModel,oView);
+};
+particle_controller_Presenter.__name__ = true;
+particle_controller_Presenter.__super__ = particle_controller_Controller;
+particle_controller_Presenter.prototype = $extend(particle_controller_Controller.prototype,{
+	init: function() {
+		var _gthis = this;
+		this._oModel.onCreate.add(function(oParticle) {
+			_gthis._oView.addParticle(oParticle);
+		});
+		this._oModel.onDelete.add(function(oParticle1) {
+			_gthis._oView.removeParticle(oParticle1);
+		});
+		this._oModel.onUpdate.add(function(oEvent) {
+			_gthis._oView.updateParticle(oEvent.particle);
+		});
+	}
+});
 var particle_controller_Rotate = function(oModel,oView) {
 	var _gthis = this;
 	particle_controller_Controller.call(this,oModel,oView);
@@ -1377,7 +1397,7 @@ var particle_controller_Rotate = function(oModel,oView) {
 		}
 		var oPosition = _gthis._oView.toGridPosition(_gthis.mouse_x,_gthis.mouse_y);
 		var oParticle = _gthis._oModel.getParticleByPosition(oPosition);
-		console.log("src/particle/controller/Rotate.hx:39:",oPosition);
+		console.log("src/particle/controller/Rotate.hx:36:",oPosition);
 		if(oParticle == null) {
 			return;
 		}
@@ -1517,6 +1537,31 @@ particle_controller_process_GeneratorSpawnBehavior.prototype = $extend(particle_
 		return oParticle;
 	}
 });
+var particle_controller_process_MapBound = function(oModel,oView) {
+	this._oModel = oModel;
+	this._oView = oView;
+};
+particle_controller_process_MapBound.__name__ = true;
+particle_controller_process_MapBound.prototype = {
+	process: function() {
+		var x_min = 0;
+		var xmax;
+		var oParticle = this._oModel.getParticleAll().iterator();
+		while(oParticle.hasNext()) {
+			var oParticle1 = oParticle.next();
+			if(!this.isBetween(oParticle1.getPosition().x,0,this._oModel.getGrid().getWidth()) || !this.isBetween(oParticle1.getPosition().y,0,this._oModel.getGrid().getHeight())) {
+				this._oModel.removeParticle(oParticle1);
+			}
+		}
+	}
+	,isBetween: function(x,min,max) {
+		if(x >= min) {
+			return x <= max;
+		} else {
+			return false;
+		}
+	}
+};
 var particle_controller_process_Move = function(oModel,oView) {
 	this._lUserMove = new haxe_ds_List();
 	this._oModel = oModel;
@@ -1639,6 +1684,33 @@ particle_controller_process_Move.prototype = {
 		}
 	}
 };
+var particle_controller_process_MultiplexerBehavior = function(oModel,oView) {
+	particle_controller_Controller.call(this,oModel,oView);
+};
+particle_controller_process_MultiplexerBehavior.__name__ = true;
+particle_controller_process_MultiplexerBehavior.__super__ = particle_controller_Controller;
+particle_controller_process_MultiplexerBehavior.prototype = $extend(particle_controller_Controller.prototype,{
+	process: function() {
+		var a = this._oModel.getParticleByType("multiplexer");
+		var oParticle = a.iterator();
+		while(oParticle.hasNext()) {
+			var oParticle1 = oParticle.next();
+			if(oParticle1.getEnergy() == 0) {
+				continue;
+			}
+			var oDirectionVector = particle_model_DirectionTool.getVector(oParticle1.getDirection());
+			var oTargetPosition = oParticle1.getPosition().clone().vector_add(oDirectionVector);
+			var oTarget = this._oModel.getParticleByPosition(oTargetPosition);
+			if(oTarget != null) {
+				this._oModel.addParticleEnergy(oTarget);
+				continue;
+			}
+			this._oModel.addParticle(new particle_model_Particle(oTargetPosition,oDirectionVector,"energy_echo"));
+			this._oModel.addParticleEnergy(oParticle1,-1);
+			oParticle1.setDirection(particle_model_DirectionTool.getReverse(oParticle1.getDirection()));
+		}
+	}
+});
 var particle_controller_process_PusherBehavior = function(oModel,oView) {
 	particle_controller_process_ATargeterBehavior.call(this,oModel,oView);
 };
@@ -2125,6 +2197,9 @@ particle_model_Model.prototype = {
 		if(i == null) {
 			i = 1;
 		}
+		if(!this._mParticle.exists(oParticle.getId())) {
+			return;
+		}
 		oParticle.addEnergy(i);
 		this.onUpdate.trigger({ particle : oParticle, field : "energy"});
 	}
@@ -2282,7 +2357,10 @@ particle_view_ParticleView.prototype = {
 		this._oBody.beginFill(this.getTypeColor(this._oParticle.getType()),1);
 		this._oBody.drawRect(-0.4,-0.4,0.8,0.8);
 		this._oBody.endFill();
-		if(["pusher","fabricator","wall_generator","redirect"].indexOf(this._oParticle.getType()) != -1) {
+		if(this._oParticle.getType() == "multiplexer") {
+			this._oBody.lineStyle(0.1,6710886,1).moveTo(0,0.25).lineTo(-0.5,0).lineTo(0,-0.25);
+		}
+		if(["pusher","fabricator","wall_generator","redirect","multiplexer"].indexOf(this._oParticle.getType()) != -1) {
 			var tmp = this._oParticle.getDirection();
 			this._oContainer.rotation = this.getDirectionRadian(tmp);
 			this._oBody.lineStyle(0.1,16711680,1).moveTo(0,0.25).lineTo(0.5,0).lineTo(0,-0.25);
@@ -2310,18 +2388,12 @@ var particle_view_View = function(oModel,oStage,oInteractionManager) {
 	this._oDragged = null;
 	var _gthis = this;
 	this._oModel = oModel;
-	oModel.onCreate.add($bind(this,this.updateParticle));
-	oModel.onUpdate.add(function(oEvent) {
-		_gthis.updateParticle(oEvent.particle);
-	});
-	oModel.onDelete.add($bind(this,this.removeParticle));
 	this._oStage = oStage;
 	this._oStage.scale.x = 10;
 	this._oStage.scale.y = 10;
 	var oGridView = new particle_view_GridView(200,100);
 	this._oStage.addChild(oGridView.getContainer());
 	this._mParticleView = new haxe_ds_IntMap();
-	this._lUpdateStack = new haxe_ds_List();
 	oInteractionManager.on("pointerup",function(event) {
 		if(_gthis._oDragged == null) {
 			return;
@@ -2347,8 +2419,26 @@ particle_view_View.prototype = {
 	,setZoom: function(x,y,f) {
 		this._oStage.setTransform(x,y,f,f);
 	}
+	,addParticle: function(oParticle) {
+		var _this = this._mParticleView;
+		var key = oParticle.getId();
+		if(_this.h.hasOwnProperty(key)) {
+			throw new js__$Boot_HaxeError("!!!");
+		}
+		var _this1 = this._mParticleView;
+		var key1 = oParticle.getId();
+		var value = this._createParticleView(oParticle);
+		_this1.h[key1] = value;
+	}
 	,updateParticle: function(oParticle) {
-		this._lUpdateStack.push(oParticle);
+		var _this = this._mParticleView;
+		var key = oParticle.getId();
+		if(!_this.h.hasOwnProperty(key)) {
+			throw new js__$Boot_HaxeError("!!");
+		}
+		var _this1 = this._mParticleView;
+		var key1 = oParticle.getId();
+		_this1.h[key1].update();
 	}
 	,removeParticle: function(oParticle) {
 		if(this._oModel.getCount() + 1 != Lambda.count(this._mParticleView)) {
@@ -2357,8 +2447,10 @@ particle_view_View.prototype = {
 		var _this = this._mParticleView;
 		var key = oParticle.getId();
 		if(!_this.h.hasOwnProperty(key)) {
+			console.log("src/particle/view/View.hx:112:","WARING trying to remove #" + oParticle.getId());
 			return;
 		}
+		console.log("src/particle/view/View.hx:115:","removing #" + oParticle.getId());
 		var tmp = this._oStage;
 		var _this1 = this._mParticleView;
 		var key1 = oParticle.getId();
@@ -2369,34 +2461,16 @@ particle_view_View.prototype = {
 		}
 	}
 	,update: function() {
-		var oParticle = null;
-		while(true) {
-			oParticle = this._lUpdateStack.pop();
-			if(!(oParticle != null)) {
-				break;
-			}
-			var _this = this._mParticleView;
-			var key = oParticle.getId();
-			if(!_this.h.hasOwnProperty(key)) {
-				var _this1 = this._mParticleView;
-				var key1 = oParticle.getId();
-				var value = this.createParticleView(oParticle);
-				_this1.h[key1] = value;
-			}
-			var _this2 = this._mParticleView;
-			var key2 = oParticle.getId();
-			var oView = _this2.h[key2];
-			oView.update();
-		}
 	}
-	,createParticleView: function(oParticle) {
+	,_createParticleView: function(oParticle) {
 		var _gthis = this;
 		var oView = new particle_view_ParticleView(oParticle);
 		this._oStage.addChild(oView.getContainer());
 		oView.getContainer().on("pointerdown",function() {
 			_gthis._oDragged = oView;
-			console.log("src/particle/view/View.hx:132:",_gthis._oDragged);
+			console.log("src/particle/view/View.hx:144:",_gthis._oDragged);
 		});
+		oView.update();
 		return oView;
 	}
 };
@@ -2485,6 +2559,7 @@ particle_view_ParticleView.TYPE_COLOR = (function($this) {
 	_g.set("energy_echo",65535);
 	_g.set("pusher",16776960);
 	_g.set("redirect",65535);
+	_g.set("multiplexer",65535);
 	_g.set("wall_generator",0);
 	_g.set("fabricator",15658734);
 	$r = _g;

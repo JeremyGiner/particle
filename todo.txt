@@ -1,8 +1,5 @@
 
-halde mass and charge
-
-mash together
-	- mash direction (vertical horizontal)
+make block creation harder and cosume more energy
 
 center of it all
 
@@ -12,7 +9,18 @@ menu
 
 drag drop 
 	pause on drag
+	
+enact energy change after loop
+zoom out of center screen
 
+scenario
+	tutorial 1 
+		- demonstrate a working factory (multiplexer) 
+		- use drag and drop and rotate only to succeed
+		-
+	tutorial 2
+		- create factory with limited turn to a shipping block
+		- 
 ________________________
 
 COMPONENT

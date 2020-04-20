@@ -200,6 +200,9 @@ class Model {
 	}
 	
 	public function addParticleEnergy( oParticle :Particle, i :Int = 1 ) {
+		
+		if ( !_mParticle.exists(oParticle.getId()) )
+			return;
 		oParticle.addEnergy( i );
 		
 		onUpdate.trigger({particle: oParticle, field: 'energy', });

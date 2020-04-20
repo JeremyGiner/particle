@@ -21,6 +21,7 @@ class ParticleView {
 		ParticleType.energy_echo => 0x00ffff,
 		ParticleType.pusher => 0xFFFF00,
 		ParticleType.redirect => 0x00FFFF,
+		ParticleType.multiplexer => 0x00FFFF,
 		ParticleType.wall_generator => 0x000000,
 		ParticleType.fabricator => 0xeeeeee,
 	];
@@ -81,11 +82,23 @@ class ParticleView {
 		_oBody.drawRect(-(1-0.2)/2,-(1-0.2)/2, 1-0.2, 1-0.2);
 		_oBody.endFill();
 		
+		
+		if ( _oParticle.getType() == ParticleType.multiplexer ) {
+			_oBody
+				.lineStyle( 0.1, 0x666666, 1 )
+				.moveTo( 0, 0.25 )
+				.lineTo( -0.5, 0 )
+				.lineTo( 0, -0.25 )
+			;
+			
+		}
+		
 		if ( [
 			ParticleType.pusher, 
 			ParticleType.fabricator,
 			ParticleType.wall_generator,
 			ParticleType.redirect,
+			ParticleType.multiplexer,
 		].indexOf( _oParticle.getType() ) != -1  ) {
 			_oContainer.rotation = getDirectionRadian( _oParticle.getDirection() );
 			_oBody
@@ -95,6 +108,8 @@ class ParticleView {
 				.lineTo( 0, -0.25 )
 			;
 		}
+		
+
 			
 	}
 
