@@ -1,5 +1,5 @@
 package particle.controller.process;
-import particle.controller.Controller;
+import particle.controller.AController;
 import particle.model.Particle;
 import space.Vector2i;
 import sweet.functor.IProcedure;
@@ -10,7 +10,7 @@ import particle.model.Direction.DirectionTool;
  * ...
  * @author 
  */
-class WallGeneratorBehavior extends Controller implements IProcedure {
+class WallGeneratorBehavior extends AController implements IProcedure {
 
 	public function process() {
 		

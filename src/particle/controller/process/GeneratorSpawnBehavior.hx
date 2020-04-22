@@ -1,5 +1,5 @@
 package particle.controller.process;
-import particle.controller.Controller;
+import particle.controller.AController;
 import particle.model.Direction;
 import particle.model.Particle;
 import space.Vector2i;
@@ -12,7 +12,7 @@ import haxe.Timer;
  * ...
  * @author 
  */
-class GeneratorSpawnBehavior extends Controller implements IProcedure {
+class GeneratorSpawnBehavior extends AController implements IProcedure {
 
 	public function process() {
 		

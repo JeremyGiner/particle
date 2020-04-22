@@ -27,6 +27,19 @@ EReg.prototype = {
 			throw new js__$Boot_HaxeError("EReg::matched");
 		}
 	}
+	,matchedRight: function() {
+		if(this.r.m == null) {
+			throw new js__$Boot_HaxeError("No string matched");
+		}
+		var sz = this.r.m.index + this.r.m[0].length;
+		return HxOverrides.substr(this.r.s,sz,this.r.s.length - sz);
+	}
+	,matchedPos: function() {
+		if(this.r.m == null) {
+			throw new js__$Boot_HaxeError("No string matched");
+		}
+		return { pos : this.r.m.index, len : this.r.m[0].length};
+	}
 };
 var HxOverrides = function() { };
 HxOverrides.__name__ = true;
@@ -329,6 +342,25 @@ Reflect.field = function(o,field) {
 		return null;
 	}
 };
+Reflect.getProperty = function(o,field) {
+	var tmp;
+	if(o == null) {
+		return null;
+	} else {
+		var tmp1;
+		if(o.__properties__) {
+			tmp = o.__properties__["get_" + field];
+			tmp1 = tmp;
+		} else {
+			tmp1 = false;
+		}
+		if(tmp1) {
+			return o[tmp]();
+		} else {
+			return o[field];
+		}
+	}
+};
 Reflect.compare = function(a,b) {
 	if(a == b) {
 		return 0;
@@ -347,6 +379,9 @@ Reflect.isEnumValue = function(v) {
 };
 var Std = function() { };
 Std.__name__ = true;
+Std.string = function(s) {
+	return js_Boot.__string_rec(s,"");
+};
 Std.parseInt = function(x) {
 	if(x != null) {
 		var _g = 0;
@@ -366,6 +401,10 @@ Std.parseInt = function(x) {
 	}
 	return null;
 };
+var StringBuf = function() {
+	this.b = "";
+};
+StringBuf.__name__ = true;
 var StringTools = function() { };
 StringTools.__name__ = true;
 StringTools.isSpace = function(s,pos) {
@@ -518,6 +557,727 @@ haxe_IntTool.min = function(a,b) {
 		return a;
 	} else {
 		return b;
+	}
+};
+var haxe_Resource = function() { };
+haxe_Resource.__name__ = true;
+haxe_Resource.getString = function(name) {
+	var _g = 0;
+	var _g1 = haxe_Resource.content;
+	while(_g < _g1.length) {
+		var x = _g1[_g];
+		++_g;
+		if(x.name == name) {
+			if(x.str != null) {
+				return x.str;
+			}
+			var b = haxe_crypto_Base64.decode(x.data);
+			return b.toString();
+		}
+	}
+	return null;
+};
+var haxe__$Template_TemplateExpr = $hxEnums["haxe._Template.TemplateExpr"] = { __ename__ : true, __constructs__ : ["OpVar","OpExpr","OpIf","OpStr","OpBlock","OpForeach","OpMacro"]
+	,OpVar: ($_=function(v) { return {_hx_index:0,v:v,__enum__:"haxe._Template.TemplateExpr",toString:$estr}; },$_.__params__ = ["v"],$_)
+	,OpExpr: ($_=function(expr) { return {_hx_index:1,expr:expr,__enum__:"haxe._Template.TemplateExpr",toString:$estr}; },$_.__params__ = ["expr"],$_)
+	,OpIf: ($_=function(expr,eif,eelse) { return {_hx_index:2,expr:expr,eif:eif,eelse:eelse,__enum__:"haxe._Template.TemplateExpr",toString:$estr}; },$_.__params__ = ["expr","eif","eelse"],$_)
+	,OpStr: ($_=function(str) { return {_hx_index:3,str:str,__enum__:"haxe._Template.TemplateExpr",toString:$estr}; },$_.__params__ = ["str"],$_)
+	,OpBlock: ($_=function(l) { return {_hx_index:4,l:l,__enum__:"haxe._Template.TemplateExpr",toString:$estr}; },$_.__params__ = ["l"],$_)
+	,OpForeach: ($_=function(expr,loop) { return {_hx_index:5,expr:expr,loop:loop,__enum__:"haxe._Template.TemplateExpr",toString:$estr}; },$_.__params__ = ["expr","loop"],$_)
+	,OpMacro: ($_=function(name,params) { return {_hx_index:6,name:name,params:params,__enum__:"haxe._Template.TemplateExpr",toString:$estr}; },$_.__params__ = ["name","params"],$_)
+};
+var haxe_Template = function(str) {
+	var tokens = this.parseTokens(str);
+	this.expr = this.parseBlock(tokens);
+	if(!tokens.isEmpty()) {
+		throw new js__$Boot_HaxeError("Unexpected '" + Std.string(tokens.first().s) + "'");
+	}
+};
+haxe_Template.__name__ = true;
+haxe_Template.prototype = {
+	execute: function(context,macros) {
+		this.macros = macros == null ? { } : macros;
+		this.context = context;
+		this.stack = new haxe_ds_List();
+		this.buf = new StringBuf();
+		this.run(this.expr);
+		return this.buf.b;
+	}
+	,resolve: function(v) {
+		if(v == "__current__") {
+			return this.context;
+		}
+		var value = Reflect.getProperty(this.context,v);
+		if(value != null || Object.prototype.hasOwnProperty.call(this.context,v)) {
+			return value;
+		}
+		var _g_head = this.stack.h;
+		while(_g_head != null) {
+			var val = _g_head.item;
+			_g_head = _g_head.next;
+			var ctx = val;
+			value = Reflect.getProperty(ctx,v);
+			if(value != null || Object.prototype.hasOwnProperty.call(ctx,v)) {
+				return value;
+			}
+		}
+		return Reflect.field(haxe_Template.globals,v);
+	}
+	,parseTokens: function(data) {
+		var tokens = new haxe_ds_List();
+		while(haxe_Template.splitter.match(data)) {
+			var p = haxe_Template.splitter.matchedPos();
+			if(p.pos > 0) {
+				tokens.add({ p : HxOverrides.substr(data,0,p.pos), s : true, l : null});
+			}
+			if(HxOverrides.cca(data,p.pos) == 58) {
+				tokens.add({ p : HxOverrides.substr(data,p.pos + 2,p.len - 4), s : false, l : null});
+				data = haxe_Template.splitter.matchedRight();
+				continue;
+			}
+			var parp = p.pos + p.len;
+			var npar = 1;
+			var params = [];
+			var part = "";
+			while(true) {
+				var c = HxOverrides.cca(data,parp);
+				++parp;
+				if(c == 40) {
+					++npar;
+				} else if(c == 41) {
+					--npar;
+					if(npar <= 0) {
+						break;
+					}
+				} else if(c == null) {
+					throw new js__$Boot_HaxeError("Unclosed macro parenthesis");
+				}
+				if(c == 44 && npar == 1) {
+					params.push(part);
+					part = "";
+				} else {
+					part += String.fromCodePoint(c);
+				}
+			}
+			params.push(part);
+			tokens.add({ p : haxe_Template.splitter.matched(2), s : false, l : params});
+			data = HxOverrides.substr(data,parp,data.length - parp);
+		}
+		if(data.length > 0) {
+			tokens.add({ p : data, s : true, l : null});
+		}
+		return tokens;
+	}
+	,parseBlock: function(tokens) {
+		var l = new haxe_ds_List();
+		while(true) {
+			var t = tokens.first();
+			if(t == null) {
+				break;
+			}
+			if(!t.s && (t.p == "end" || t.p == "else" || HxOverrides.substr(t.p,0,7) == "elseif ")) {
+				break;
+			}
+			l.add(this.parse(tokens));
+		}
+		if(l.length == 1) {
+			return l.first();
+		}
+		return haxe__$Template_TemplateExpr.OpBlock(l);
+	}
+	,parse: function(tokens) {
+		var t = tokens.pop();
+		var p = t.p;
+		if(t.s) {
+			return haxe__$Template_TemplateExpr.OpStr(p);
+		}
+		if(t.l != null) {
+			var pe = new haxe_ds_List();
+			var _g = 0;
+			var _g1 = t.l;
+			while(_g < _g1.length) {
+				var p1 = _g1[_g];
+				++_g;
+				pe.add(this.parseBlock(this.parseTokens(p1)));
+			}
+			return haxe__$Template_TemplateExpr.OpMacro(p,pe);
+		}
+		var kwdEnd = function(kwd) {
+			var pos = -1;
+			var length = kwd.length;
+			if(HxOverrides.substr(p,0,length) == kwd) {
+				pos = length;
+				var _g_offset = 0;
+				var _g_s = HxOverrides.substr(p,length,null);
+				while(_g_offset < _g_s.length) {
+					var c = _g_s.charCodeAt(_g_offset++);
+					if(c == 32) {
+						++pos;
+					} else {
+						break;
+					}
+				}
+			}
+			return pos;
+		};
+		var pos1 = kwdEnd("if");
+		if(pos1 > 0) {
+			p = HxOverrides.substr(p,pos1,p.length - pos1);
+			var e = this.parseExpr(p);
+			var eif = this.parseBlock(tokens);
+			var t1 = tokens.first();
+			var eelse;
+			if(t1 == null) {
+				throw new js__$Boot_HaxeError("Unclosed 'if'");
+			}
+			if(t1.p == "end") {
+				tokens.pop();
+				eelse = null;
+			} else if(t1.p == "else") {
+				tokens.pop();
+				eelse = this.parseBlock(tokens);
+				t1 = tokens.pop();
+				if(t1 == null || t1.p != "end") {
+					throw new js__$Boot_HaxeError("Unclosed 'else'");
+				}
+			} else {
+				t1.p = HxOverrides.substr(t1.p,4,t1.p.length - 4);
+				eelse = this.parse(tokens);
+			}
+			return haxe__$Template_TemplateExpr.OpIf(e,eif,eelse);
+		}
+		var pos2 = kwdEnd("foreach");
+		if(pos2 >= 0) {
+			p = HxOverrides.substr(p,pos2,p.length - pos2);
+			var e1 = this.parseExpr(p);
+			var efor = this.parseBlock(tokens);
+			var t2 = tokens.pop();
+			if(t2 == null || t2.p != "end") {
+				throw new js__$Boot_HaxeError("Unclosed 'foreach'");
+			}
+			return haxe__$Template_TemplateExpr.OpForeach(e1,efor);
+		}
+		if(haxe_Template.expr_splitter.match(p)) {
+			return haxe__$Template_TemplateExpr.OpExpr(this.parseExpr(p));
+		}
+		return haxe__$Template_TemplateExpr.OpVar(p);
+	}
+	,parseExpr: function(data) {
+		var l = new haxe_ds_List();
+		var expr = data;
+		while(haxe_Template.expr_splitter.match(data)) {
+			var p = haxe_Template.expr_splitter.matchedPos();
+			var k = p.pos + p.len;
+			if(p.pos != 0) {
+				l.add({ p : HxOverrides.substr(data,0,p.pos), s : true});
+			}
+			var p1 = haxe_Template.expr_splitter.matched(0);
+			l.add({ p : p1, s : p1.indexOf("\"") >= 0});
+			data = haxe_Template.expr_splitter.matchedRight();
+		}
+		if(data.length != 0) {
+			var _g_offset = 0;
+			var _g_s = data;
+			while(_g_offset < _g_s.length) {
+				var _g1_key = _g_offset;
+				var _g1_value = _g_s.charCodeAt(_g_offset++);
+				var i = _g1_key;
+				var c = _g1_value;
+				if(c != 32) {
+					l.add({ p : HxOverrides.substr(data,i,null), s : true});
+					break;
+				}
+			}
+		}
+		var e;
+		try {
+			e = this.makeExpr(l);
+			if(!l.isEmpty()) {
+				throw new js__$Boot_HaxeError(l.first().p);
+			}
+		} catch( s ) {
+			var s1 = ((s) instanceof js__$Boot_HaxeError) ? s.val : s;
+			if(typeof(s1) == "string") {
+				throw new js__$Boot_HaxeError("Unexpected '" + s1 + "' in " + expr);
+			} else {
+				throw s;
+			}
+		}
+		return function() {
+			try {
+				return e();
+			} catch( exc ) {
+				throw new js__$Boot_HaxeError("Error : " + Std.string(((exc) instanceof js__$Boot_HaxeError) ? exc.val : exc) + " in " + expr);
+			}
+		};
+	}
+	,makeConst: function(v) {
+		haxe_Template.expr_trim.match(v);
+		v = haxe_Template.expr_trim.matched(1);
+		if(HxOverrides.cca(v,0) == 34) {
+			var str = HxOverrides.substr(v,1,v.length - 2);
+			return function() {
+				return str;
+			};
+		}
+		if(haxe_Template.expr_int.match(v)) {
+			var i = Std.parseInt(v);
+			return function() {
+				return i;
+			};
+		}
+		if(haxe_Template.expr_float.match(v)) {
+			var f = parseFloat(v);
+			return function() {
+				return f;
+			};
+		}
+		var me = this;
+		return function() {
+			return me.resolve(v);
+		};
+	}
+	,makePath: function(e,l) {
+		var p = l.first();
+		if(p == null || p.p != ".") {
+			return e;
+		}
+		l.pop();
+		var field = l.pop();
+		if(field == null || !field.s) {
+			throw new js__$Boot_HaxeError(field.p);
+		}
+		var f = field.p;
+		haxe_Template.expr_trim.match(f);
+		f = haxe_Template.expr_trim.matched(1);
+		return this.makePath(function() {
+			return Reflect.field(e(),f);
+		},l);
+	}
+	,makeExpr: function(l) {
+		return this.makePath(this.makeExpr2(l),l);
+	}
+	,skipSpaces: function(l) {
+		var p = l.first();
+		while(p != null) {
+			var _g_offset = 0;
+			var _g_s = p.p;
+			while(_g_offset < _g_s.length) {
+				var c = _g_s.charCodeAt(_g_offset++);
+				if(c != 32) {
+					return;
+				}
+			}
+			l.pop();
+			p = l.first();
+		}
+	}
+	,makeExpr2: function(l) {
+		this.skipSpaces(l);
+		var p = l.pop();
+		this.skipSpaces(l);
+		if(p == null) {
+			throw new js__$Boot_HaxeError("<eof>");
+		}
+		if(p.s) {
+			return this.makeConst(p.p);
+		}
+		switch(p.p) {
+		case "!":
+			var e = this.makeExpr(l);
+			return function() {
+				var v = e();
+				if(v != null) {
+					return v == false;
+				} else {
+					return true;
+				}
+			};
+		case "(":
+			this.skipSpaces(l);
+			var e1 = this.makeExpr(l);
+			this.skipSpaces(l);
+			var p1 = l.pop();
+			if(p1 == null || p1.s) {
+				throw new js__$Boot_HaxeError(p1);
+			}
+			if(p1.p == ")") {
+				return e1;
+			}
+			this.skipSpaces(l);
+			var e2 = this.makeExpr(l);
+			this.skipSpaces(l);
+			var p2 = l.pop();
+			this.skipSpaces(l);
+			if(p2 == null || p2.p != ")") {
+				throw new js__$Boot_HaxeError(p2);
+			}
+			switch(p1.p) {
+			case "!=":
+				return function() {
+					return e1() != e2();
+				};
+			case "&&":
+				return function() {
+					return e1() && e2();
+				};
+			case "*":
+				return function() {
+					return e1() * e2();
+				};
+			case "+":
+				return function() {
+					return e1() + e2();
+				};
+			case "-":
+				return function() {
+					return e1() - e2();
+				};
+			case "/":
+				return function() {
+					return e1() / e2();
+				};
+			case "<":
+				return function() {
+					return e1() < e2();
+				};
+			case "<=":
+				return function() {
+					return e1() <= e2();
+				};
+			case "==":
+				return function() {
+					return e1() == e2();
+				};
+			case ">":
+				return function() {
+					return e1() > e2();
+				};
+			case ">=":
+				return function() {
+					return e1() >= e2();
+				};
+			case "||":
+				return function() {
+					return e1() || e2();
+				};
+			default:
+				throw new js__$Boot_HaxeError("Unknown operation " + p1.p);
+			}
+			break;
+		case "-":
+			var e3 = this.makeExpr(l);
+			return function() {
+				return -e3();
+			};
+		}
+		throw new js__$Boot_HaxeError(p.p);
+	}
+	,run: function(e) {
+		switch(e._hx_index) {
+		case 0:
+			var v = e.v;
+			var _this = this.buf;
+			var x = Std.string(this.resolve(v));
+			_this.b += Std.string(x);
+			break;
+		case 1:
+			var e1 = e.expr;
+			var _this1 = this.buf;
+			var x1 = Std.string(e1());
+			_this1.b += Std.string(x1);
+			break;
+		case 2:
+			var eelse = e.eelse;
+			var eif = e.eif;
+			var e2 = e.expr;
+			var v1 = e2();
+			if(v1 == null || v1 == false) {
+				if(eelse != null) {
+					this.run(eelse);
+				}
+			} else {
+				this.run(eif);
+			}
+			break;
+		case 3:
+			var str = e.str;
+			this.buf.b += str == null ? "null" : "" + str;
+			break;
+		case 4:
+			var l = e.l;
+			var _g_head = l.h;
+			while(_g_head != null) {
+				var val = _g_head.item;
+				_g_head = _g_head.next;
+				var e3 = val;
+				this.run(e3);
+			}
+			break;
+		case 5:
+			var loop = e.loop;
+			var e4 = e.expr;
+			var v2 = e4();
+			try {
+				var x2 = $getIterator(v2);
+				if(x2.hasNext == null) {
+					throw new js__$Boot_HaxeError(null);
+				}
+				v2 = x2;
+			} catch( e5 ) {
+				var e6 = ((e5) instanceof js__$Boot_HaxeError) ? e5.val : e5;
+				try {
+					if(v2.hasNext == null) {
+						throw new js__$Boot_HaxeError(null);
+					}
+				} catch( e7 ) {
+					var e8 = ((e7) instanceof js__$Boot_HaxeError) ? e7.val : e7;
+					throw new js__$Boot_HaxeError("Cannot iter on " + Std.string(v2));
+				}
+			}
+			this.stack.push(this.context);
+			var v3 = v2;
+			var ctx = v3;
+			while(ctx.hasNext()) {
+				var ctx1 = ctx.next();
+				this.context = ctx1;
+				this.run(loop);
+			}
+			this.context = this.stack.pop();
+			break;
+		case 6:
+			var params = e.params;
+			var m = e.name;
+			var v4 = Reflect.field(this.macros,m);
+			var pl = [];
+			var old = this.buf;
+			pl.push($bind(this,this.resolve));
+			var _g_head1 = params.h;
+			while(_g_head1 != null) {
+				var val1 = _g_head1.item;
+				_g_head1 = _g_head1.next;
+				var p = val1;
+				if(p._hx_index == 0) {
+					var v5 = p.v;
+					pl.push(this.resolve(v5));
+				} else {
+					this.buf = new StringBuf();
+					this.run(p);
+					pl.push(this.buf.b);
+				}
+			}
+			this.buf = old;
+			try {
+				var _this2 = this.buf;
+				var x3 = Std.string(v4.apply(this.macros,pl));
+				_this2.b += Std.string(x3);
+			} catch( e9 ) {
+				var e10 = ((e9) instanceof js__$Boot_HaxeError) ? e9.val : e9;
+				var plstr;
+				try {
+					plstr = pl.join(",");
+				} catch( e11 ) {
+					var e12 = ((e11) instanceof js__$Boot_HaxeError) ? e11.val : e11;
+					plstr = "???";
+				}
+				var msg = "Macro call " + m + "(" + plstr + ") failed (" + Std.string(e10) + ")";
+				throw new js__$Boot_HaxeError(msg);
+			}
+			break;
+		}
+	}
+};
+var haxe_Timer = function(time_ms) {
+	var me = this;
+	this.id = setInterval(function() {
+		me.run();
+	},time_ms);
+};
+haxe_Timer.__name__ = true;
+haxe_Timer.delay = function(f,time_ms) {
+	var t = new haxe_Timer(time_ms);
+	t.run = function() {
+		t.stop();
+		f();
+	};
+	return t;
+};
+haxe_Timer.prototype = {
+	stop: function() {
+		if(this.id == null) {
+			return;
+		}
+		clearInterval(this.id);
+		this.id = null;
+	}
+	,run: function() {
+	}
+};
+var haxe_io_Bytes = function(data) {
+	this.length = data.byteLength;
+	this.b = new Uint8Array(data);
+	this.b.bufferValue = data;
+	data.hxBytes = this;
+	data.bytes = this.b;
+};
+haxe_io_Bytes.__name__ = true;
+haxe_io_Bytes.ofString = function(s,encoding) {
+	if(encoding == haxe_io_Encoding.RawNative) {
+		var buf = new Uint8Array(s.length << 1);
+		var _g = 0;
+		var _g1 = s.length;
+		while(_g < _g1) {
+			var i = _g++;
+			var c = s.charCodeAt(i);
+			buf[i << 1] = c & 255;
+			buf[i << 1 | 1] = c >> 8;
+		}
+		return new haxe_io_Bytes(buf.buffer);
+	}
+	var a = [];
+	var i1 = 0;
+	while(i1 < s.length) {
+		var c1 = s.charCodeAt(i1++);
+		if(55296 <= c1 && c1 <= 56319) {
+			c1 = c1 - 55232 << 10 | s.charCodeAt(i1++) & 1023;
+		}
+		if(c1 <= 127) {
+			a.push(c1);
+		} else if(c1 <= 2047) {
+			a.push(192 | c1 >> 6);
+			a.push(128 | c1 & 63);
+		} else if(c1 <= 65535) {
+			a.push(224 | c1 >> 12);
+			a.push(128 | c1 >> 6 & 63);
+			a.push(128 | c1 & 63);
+		} else {
+			a.push(240 | c1 >> 18);
+			a.push(128 | c1 >> 12 & 63);
+			a.push(128 | c1 >> 6 & 63);
+			a.push(128 | c1 & 63);
+		}
+	}
+	return new haxe_io_Bytes(new Uint8Array(a).buffer);
+};
+haxe_io_Bytes.prototype = {
+	getString: function(pos,len,encoding) {
+		if(pos < 0 || len < 0 || pos + len > this.length) {
+			throw new js__$Boot_HaxeError(haxe_io_Error.OutsideBounds);
+		}
+		if(encoding == null) {
+			encoding = haxe_io_Encoding.UTF8;
+		}
+		var s = "";
+		var b = this.b;
+		var i = pos;
+		var max = pos + len;
+		switch(encoding._hx_index) {
+		case 0:
+			var debug = pos > 0;
+			while(i < max) {
+				var c = b[i++];
+				if(c < 128) {
+					if(c == 0) {
+						break;
+					}
+					s += String.fromCodePoint(c);
+				} else if(c < 224) {
+					var code = (c & 63) << 6 | b[i++] & 127;
+					s += String.fromCodePoint(code);
+				} else if(c < 240) {
+					var c2 = b[i++];
+					var code1 = (c & 31) << 12 | (c2 & 127) << 6 | b[i++] & 127;
+					s += String.fromCodePoint(code1);
+				} else {
+					var c21 = b[i++];
+					var c3 = b[i++];
+					var u = (c & 15) << 18 | (c21 & 127) << 12 | (c3 & 127) << 6 | b[i++] & 127;
+					s += String.fromCodePoint(u);
+				}
+			}
+			break;
+		case 1:
+			while(i < max) {
+				var c1 = b[i++] | b[i++] << 8;
+				s += String.fromCodePoint(c1);
+			}
+			break;
+		}
+		return s;
+	}
+	,toString: function() {
+		return this.getString(0,this.length);
+	}
+};
+var haxe_io_Encoding = $hxEnums["haxe.io.Encoding"] = { __ename__ : true, __constructs__ : ["UTF8","RawNative"]
+	,UTF8: {_hx_index:0,__enum__:"haxe.io.Encoding",toString:$estr}
+	,RawNative: {_hx_index:1,__enum__:"haxe.io.Encoding",toString:$estr}
+};
+var haxe_crypto_Base64 = function() { };
+haxe_crypto_Base64.__name__ = true;
+haxe_crypto_Base64.decode = function(str,complement) {
+	if(complement == null) {
+		complement = true;
+	}
+	if(complement) {
+		while(HxOverrides.cca(str,str.length - 1) == 61) str = HxOverrides.substr(str,0,-1);
+	}
+	return new haxe_crypto_BaseCode(haxe_crypto_Base64.BYTES).decodeBytes(haxe_io_Bytes.ofString(str));
+};
+var haxe_crypto_BaseCode = function(base) {
+	var len = base.length;
+	var nbits = 1;
+	while(len > 1 << nbits) ++nbits;
+	if(nbits > 8 || len != 1 << nbits) {
+		throw new js__$Boot_HaxeError("BaseCode : base length must be a power of two.");
+	}
+	this.base = base;
+	this.nbits = nbits;
+};
+haxe_crypto_BaseCode.__name__ = true;
+haxe_crypto_BaseCode.prototype = {
+	initTable: function() {
+		var tbl = [];
+		var _g = 0;
+		while(_g < 256) {
+			var i = _g++;
+			tbl[i] = -1;
+		}
+		var _g1 = 0;
+		var _g2 = this.base.length;
+		while(_g1 < _g2) {
+			var i1 = _g1++;
+			tbl[this.base.b[i1]] = i1;
+		}
+		this.tbl = tbl;
+	}
+	,decodeBytes: function(b) {
+		var nbits = this.nbits;
+		var base = this.base;
+		if(this.tbl == null) {
+			this.initTable();
+		}
+		var tbl = this.tbl;
+		var size = b.length * nbits >> 3;
+		var out = new haxe_io_Bytes(new ArrayBuffer(size));
+		var buf = 0;
+		var curbits = 0;
+		var pin = 0;
+		var pout = 0;
+		while(pout < size) {
+			while(curbits < 8) {
+				curbits += nbits;
+				buf <<= nbits;
+				var i = tbl[b.b[pin++]];
+				if(i == -1) {
+					throw new js__$Boot_HaxeError("BaseCode : invalid encoded char");
+				}
+				buf |= i;
+			}
+			curbits -= 8;
+			out.b[pout++] = buf >> curbits & 255;
+		}
+		return out;
 	}
 };
 var haxe_ds_ArraySort = function() { };
@@ -929,6 +1689,13 @@ haxe_ds_List.prototype = {
 		}
 		this.length++;
 	}
+	,first: function() {
+		if(this.h == null) {
+			return null;
+		} else {
+			return this.h.item;
+		}
+	}
 	,pop: function() {
 		if(this.h == null) {
 			return null;
@@ -940,6 +1707,9 @@ haxe_ds_List.prototype = {
 		}
 		this.length--;
 		return x;
+	}
+	,isEmpty: function() {
+		return this.h == null;
 	}
 	,remove: function(v) {
 		var prev = null;
@@ -961,6 +1731,23 @@ haxe_ds_List.prototype = {
 			l = l.next;
 		}
 		return false;
+	}
+	,toString: function() {
+		var s_b = "";
+		var first = true;
+		var l = this.h;
+		s_b += "{";
+		while(l != null) {
+			if(first) {
+				first = false;
+			} else {
+				s_b += ", ";
+			}
+			s_b += Std.string(Std.string(l.item));
+			l = l.next;
+		}
+		s_b += "}";
+		return s_b;
 	}
 };
 var haxe_ds__$List_ListNode = function(item,next) {
@@ -1067,6 +1854,12 @@ haxe_ds_StringMap.prototype = {
 	,iterator: function() {
 		return new haxe_ds__$StringMap_StringMapIterator(this,this.arrayKeys());
 	}
+};
+var haxe_io_Error = $hxEnums["haxe.io.Error"] = { __ename__ : true, __constructs__ : ["Blocked","Overflow","OutsideBounds","Custom"]
+	,Blocked: {_hx_index:0,__enum__:"haxe.io.Error",toString:$estr}
+	,Overflow: {_hx_index:1,__enum__:"haxe.io.Error",toString:$estr}
+	,OutsideBounds: {_hx_index:2,__enum__:"haxe.io.Error",toString:$estr}
+	,Custom: ($_=function(e) { return {_hx_index:3,e:e,__enum__:"haxe.io.Error",toString:$estr}; },$_.__params__ = ["e"],$_)
 };
 var js__$Boot_HaxeError = function(val) {
 	Error.call(this);
@@ -1294,7 +2087,6 @@ pixi_plugins_app_Application.prototype = {
 	}
 };
 var particle_Main = function() {
-	var _gthis = this;
 	pixi_plugins_app_Application.call(this);
 	this.position = "fixed";
 	this.width = window.innerWidth;
@@ -1302,31 +2094,10 @@ var particle_Main = function() {
 	this.backgroundColor = 0;
 	this.antialias = false;
 	this.onUpdate = $bind(this,this._animate);
-	pixi_plugins_app_Application.prototype.start.call(this);
+	pixi_plugins_app_Application.prototype.start.call(this,"auto",window.document.getElementById("container-game"),window.document.getElementById("canva-game"));
 	this._oModel = new particle_model_Model();
 	this._oView = new particle_view_View(this._oModel,this.stage,this.renderer.plugins.interaction);
-	new particle_controller_Presenter(this._oModel,this._oView);
-	this._aProcess = [new particle_controller_process_MapBound(this._oModel,this._oView),new particle_controller_process_Move(this._oModel,this._oView),new particle_controller_process_Spawn(this._oModel,this._oView),new particle_controller_process_GeneratorSpawnBehavior(this._oModel,this._oView),new particle_controller_process_PusherBehavior(this._oModel,this._oView),new particle_controller_process_RouterBehavior(this._oModel,this._oView),new particle_controller_process_WallGeneratorBehavior(this._oModel,this._oView),new particle_controller_process_FabricatorBehavior(this._oModel,this._oView),new particle_controller_process_MultiplexerBehavior(this._oModel,this._oView)];
-	new particle_controller_DragDrop(this._oModel,this._oView,this._aProcess[0]);
-	new particle_controller_Zoom(this._oView);
-	new particle_controller_Rotate(this._oModel,this._oView);
-	console.log("src/particle/Main.hx:96:","setting up");
-	var bProcessing = false;
-	var t = null;
-	t = window.setInterval(function() {
-		if(bProcessing == true) {
-			console.log("src/particle/Main.hx:101:","[WARNING] skipping processing");
-		}
-		bProcessing = true;
-		var _g = 0;
-		var _g1 = _gthis._aProcess;
-		while(_g < _g1.length) {
-			var oProcess = _g1[_g];
-			++_g;
-			oProcess.process();
-		}
-		bProcessing = false;
-	},50);
+	new particle_controller_Controller(this._oModel,this._oView);
 };
 particle_Main.__name__ = true;
 particle_Main.main = function() {
@@ -1338,20 +2109,118 @@ particle_Main.prototype = $extend(pixi_plugins_app_Application.prototype,{
 		this._oView.update();
 	}
 });
-var particle_controller_Controller = function(oModel,oView) {
+var particle_controller_AController = function(oModel,oView) {
 	this._oModel = oModel;
 	this._oView = oView;
 	this.init();
 };
-particle_controller_Controller.__name__ = true;
-particle_controller_Controller.prototype = {
+particle_controller_AController.__name__ = true;
+particle_controller_AController.prototype = {
 	init: function() {
 	}
 };
+var particle_controller_Controller = function(oModel,oView) {
+	particle_controller_AController.call(this,oModel,oView);
+};
+particle_controller_Controller.__name__ = true;
+particle_controller_Controller.__super__ = particle_controller_AController;
+particle_controller_Controller.prototype = $extend(particle_controller_AController.prototype,{
+	init: function() {
+		this._oTimer = null;
+		new particle_controller_Presenter(this);
+		var _g = new haxe_ds_StringMap();
+		var value = new particle_controller_process_MapBound(this._oModel,this._oView);
+		if(__map_reserved["MapBound"] != null) {
+			_g.setReserved("MapBound",value);
+		} else {
+			_g.h["MapBound"] = value;
+		}
+		var value1 = new particle_controller_process_Move(this._oModel,this._oView);
+		if(__map_reserved["Move"] != null) {
+			_g.setReserved("Move",value1);
+		} else {
+			_g.h["Move"] = value1;
+		}
+		var value2 = new particle_controller_process_Spawn(this._oModel,this._oView);
+		if(__map_reserved["Spawn"] != null) {
+			_g.setReserved("Spawn",value2);
+		} else {
+			_g.h["Spawn"] = value2;
+		}
+		var value3 = new particle_controller_process_GeneratorSpawnBehavior(this._oModel,this._oView);
+		if(__map_reserved["GeneratorSpawnBehavior"] != null) {
+			_g.setReserved("GeneratorSpawnBehavior",value3);
+		} else {
+			_g.h["GeneratorSpawnBehavior"] = value3;
+		}
+		var value4 = new particle_controller_process_PusherBehavior(this._oModel,this._oView);
+		if(__map_reserved["PusherBehavior"] != null) {
+			_g.setReserved("PusherBehavior",value4);
+		} else {
+			_g.h["PusherBehavior"] = value4;
+		}
+		var value5 = new particle_controller_process_RouterBehavior(this._oModel,this._oView);
+		if(__map_reserved["RouterBehavior"] != null) {
+			_g.setReserved("RouterBehavior",value5);
+		} else {
+			_g.h["RouterBehavior"] = value5;
+		}
+		var value6 = new particle_controller_process_WallGeneratorBehavior(this._oModel,this._oView);
+		if(__map_reserved["WallGeneratorBehavior"] != null) {
+			_g.setReserved("WallGeneratorBehavior",value6);
+		} else {
+			_g.h["WallGeneratorBehavior"] = value6;
+		}
+		var value7 = new particle_controller_process_FabricatorBehavior(this._oModel,this._oView);
+		if(__map_reserved["FabricatorBehavior"] != null) {
+			_g.setReserved("FabricatorBehavior",value7);
+		} else {
+			_g.h["FabricatorBehavior"] = value7;
+		}
+		var value8 = new particle_controller_process_MultiplexerBehavior(this._oModel,this._oView);
+		if(__map_reserved["MultiplexerBehavior"] != null) {
+			_g.setReserved("MultiplexerBehavior",value8);
+		} else {
+			_g.h["MultiplexerBehavior"] = value8;
+		}
+		this._aProcess = _g;
+		new particle_controller_Zoom(this._oView);
+		new particle_controller_Rotate(this._oModel,this._oView);
+		var _this = this._aProcess;
+		new particle_controller_DragDrop(this._oModel,this._oView,__map_reserved["Move"] != null ? _this.getReserved("Move") : _this.h["Move"]);
+		this._bProcessing = false;
+	}
+	,getModel: function() {
+		return this._oModel;
+	}
+	,getView: function() {
+		return this._oView;
+	}
+	,processGameStep: function() {
+		if(this._bProcessing == true) {
+			throw new js__$Boot_HaxeError("overlapping step");
+		}
+		this._bProcessing = true;
+		if(this._oTimer != null) {
+			this._oTimer.stop();
+			this._oTimer = null;
+		}
+		var _this = this._aProcess;
+		var oProcess = new haxe_ds__$StringMap_StringMapIterator(_this,_this.arrayKeys());
+		while(oProcess.hasNext()) {
+			var oProcess1 = oProcess.next();
+			oProcess1.process();
+		}
+		if(this._oModel.getSpeed() > 0) {
+			this._oTimer = haxe_Timer.delay($bind(this,this.processGameStep),Math.ceil(50 / this._oModel.getSpeed()));
+		}
+		this._bProcessing = false;
+	}
+});
 var particle_controller_DragDrop = function(oModel,oView,oMove) {
 	var _gthis = this;
 	this._oMove = oMove;
-	particle_controller_Controller.call(this,oModel,oView);
+	particle_controller_AController.call(this,oModel,oView);
 	oView.onParticleDragTo.add(function(o) {
 		_gthis._oMove.addUserMove(o.particle,o.position);
 	});
@@ -1362,15 +2231,16 @@ var particle_controller_DragDrop = function(oModel,oView,oMove) {
 	});
 };
 particle_controller_DragDrop.__name__ = true;
-particle_controller_DragDrop.__super__ = particle_controller_Controller;
-particle_controller_DragDrop.prototype = $extend(particle_controller_Controller.prototype,{
+particle_controller_DragDrop.__super__ = particle_controller_AController;
+particle_controller_DragDrop.prototype = $extend(particle_controller_AController.prototype,{
 });
-var particle_controller_Presenter = function(oModel,oView) {
-	particle_controller_Controller.call(this,oModel,oView);
+var particle_controller_Presenter = function(oController) {
+	this._oController = oController;
+	particle_controller_AController.call(this,this._oController.getModel(),this._oController.getView());
 };
 particle_controller_Presenter.__name__ = true;
-particle_controller_Presenter.__super__ = particle_controller_Controller;
-particle_controller_Presenter.prototype = $extend(particle_controller_Controller.prototype,{
+particle_controller_Presenter.__super__ = particle_controller_AController;
+particle_controller_Presenter.prototype = $extend(particle_controller_AController.prototype,{
 	init: function() {
 		var _gthis = this;
 		this._oModel.onCreate.add(function(oParticle) {
@@ -1382,11 +2252,31 @@ particle_controller_Presenter.prototype = $extend(particle_controller_Controller
 		this._oModel.onUpdate.add(function(oEvent) {
 			_gthis._oView.updateParticle(oEvent.particle);
 		});
+		this._oModel.onSpeedChange.add(function(oModel) {
+			_gthis._oView.getMenu().update();
+		});
+		this._oView.getMenu().getContainer().addEventListener("click",function(oEvent1) {
+			if(!((oEvent1.originalTarget) instanceof HTMLElement)) {
+				return;
+			}
+			var oTarget = oEvent1.originalTarget;
+			switch(oTarget.dataset.action) {
+			case "step":
+				_gthis._oController.processGameStep();
+				break;
+			case "toggle_play":
+				_gthis._oModel.setSpeed(_gthis._oModel.getSpeed() == 0 ? 1 : 0);
+				if(_gthis._oModel.getSpeed() != 0) {
+					_gthis._oController.processGameStep();
+				}
+				break;
+			}
+		});
 	}
 });
 var particle_controller_Rotate = function(oModel,oView) {
 	var _gthis = this;
-	particle_controller_Controller.call(this,oModel,oView);
+	particle_controller_AController.call(this,oModel,oView);
 	window.addEventListener("mousemove",function(event) {
 		_gthis.mouse_x = event.clientX;
 		_gthis.mouse_y = event.clientY;
@@ -1407,8 +2297,8 @@ var particle_controller_Rotate = function(oModel,oView) {
 	});
 };
 particle_controller_Rotate.__name__ = true;
-particle_controller_Rotate.__super__ = particle_controller_Controller;
-particle_controller_Rotate.prototype = $extend(particle_controller_Controller.prototype,{
+particle_controller_Rotate.__super__ = particle_controller_AController;
+particle_controller_Rotate.prototype = $extend(particle_controller_AController.prototype,{
 	getNextDirection: function(oDirection) {
 		switch(oDirection) {
 		case 0:
@@ -1445,11 +2335,11 @@ var particle_controller_Zoom = function(oView) {
 };
 particle_controller_Zoom.__name__ = true;
 var particle_controller_process_ATargeterBehavior = function(oModel,oView) {
-	particle_controller_Controller.call(this,oModel,oView);
+	particle_controller_AController.call(this,oModel,oView);
 };
 particle_controller_process_ATargeterBehavior.__name__ = true;
-particle_controller_process_ATargeterBehavior.__super__ = particle_controller_Controller;
-particle_controller_process_ATargeterBehavior.prototype = $extend(particle_controller_Controller.prototype,{
+particle_controller_process_ATargeterBehavior.__super__ = particle_controller_AController;
+particle_controller_process_ATargeterBehavior.prototype = $extend(particle_controller_AController.prototype,{
 	process: function() {
 		var a = this._oModel.getParticleByType(this.getType());
 		var oParticle = a.iterator();
@@ -1508,11 +2398,11 @@ particle_controller_process_FabricatorBehavior.prototype = $extend(particle_cont
 	}
 });
 var particle_controller_process_GeneratorSpawnBehavior = function(oModel,oView) {
-	particle_controller_Controller.call(this,oModel,oView);
+	particle_controller_AController.call(this,oModel,oView);
 };
 particle_controller_process_GeneratorSpawnBehavior.__name__ = true;
-particle_controller_process_GeneratorSpawnBehavior.__super__ = particle_controller_Controller;
-particle_controller_process_GeneratorSpawnBehavior.prototype = $extend(particle_controller_Controller.prototype,{
+particle_controller_process_GeneratorSpawnBehavior.__super__ = particle_controller_AController;
+particle_controller_process_GeneratorSpawnBehavior.prototype = $extend(particle_controller_AController.prototype,{
 	process: function() {
 		var a = this._oModel.getParticleByType("generator");
 		var oParticle = a.iterator();
@@ -1566,7 +2456,7 @@ var particle_controller_process_Move = function(oModel,oView) {
 	this._lUserMove = new haxe_ds_List();
 	this._oModel = oModel;
 	this._oView = oView;
-	this._iMaxSpeed = 10;
+	this._iMaxSpeed = 1;
 	this._iCurrentSpeed = 1;
 	this._oCollisionHandler = new particle_controller_tool_CollisionHandler(this._oModel);
 };
@@ -1685,11 +2575,11 @@ particle_controller_process_Move.prototype = {
 	}
 };
 var particle_controller_process_MultiplexerBehavior = function(oModel,oView) {
-	particle_controller_Controller.call(this,oModel,oView);
+	particle_controller_AController.call(this,oModel,oView);
 };
 particle_controller_process_MultiplexerBehavior.__name__ = true;
-particle_controller_process_MultiplexerBehavior.__super__ = particle_controller_Controller;
-particle_controller_process_MultiplexerBehavior.prototype = $extend(particle_controller_Controller.prototype,{
+particle_controller_process_MultiplexerBehavior.__super__ = particle_controller_AController;
+particle_controller_process_MultiplexerBehavior.prototype = $extend(particle_controller_AController.prototype,{
 	process: function() {
 		var a = this._oModel.getParticleByType("multiplexer");
 		var oParticle = a.iterator();
@@ -1729,11 +2619,11 @@ particle_controller_process_PusherBehavior.prototype = $extend(particle_controll
 	}
 });
 var particle_controller_process_RouterBehavior = function(oModel,oView) {
-	particle_controller_Controller.call(this,oModel,oView);
+	particle_controller_AController.call(this,oModel,oView);
 };
 particle_controller_process_RouterBehavior.__name__ = true;
-particle_controller_process_RouterBehavior.__super__ = particle_controller_Controller;
-particle_controller_process_RouterBehavior.prototype = $extend(particle_controller_Controller.prototype,{
+particle_controller_process_RouterBehavior.__super__ = particle_controller_AController;
+particle_controller_process_RouterBehavior.prototype = $extend(particle_controller_AController.prototype,{
 	process: function() {
 		var a = this._oModel.getParticleByType("redirect");
 		var oParticle = a.iterator();
@@ -1848,11 +2738,11 @@ particle_controller_process_Spawn.prototype = {
 	}
 };
 var particle_controller_process_WallGeneratorBehavior = function(oModel,oView) {
-	particle_controller_Controller.call(this,oModel,oView);
+	particle_controller_AController.call(this,oModel,oView);
 };
 particle_controller_process_WallGeneratorBehavior.__name__ = true;
-particle_controller_process_WallGeneratorBehavior.__super__ = particle_controller_Controller;
-particle_controller_process_WallGeneratorBehavior.prototype = $extend(particle_controller_Controller.prototype,{
+particle_controller_process_WallGeneratorBehavior.__super__ = particle_controller_AController;
+particle_controller_process_WallGeneratorBehavior.prototype = $extend(particle_controller_AController.prototype,{
 	process: function() {
 		var a = this._oModel.getParticleByType("wall_generator");
 		var oParticle = a.iterator();
@@ -2078,9 +2968,11 @@ particle_model_Grid.prototype = {
 	}
 };
 var particle_model_Model = function() {
+	this._iSpeed = 0;
 	this.onCreate = new trigger_EventListener();
 	this.onDelete = new trigger_EventListener();
 	this.onUpdate = new trigger_EventListener();
+	this.onSpeedChange = new trigger_EventListener();
 	this._oGrid = new particle_model_Grid(100,50);
 	this._oIdGen = new particle_tool_UniqueIdGenerator();
 	this.test = new haxe_ds_BalancedTreeFunctor();
@@ -2122,6 +3014,13 @@ particle_model_Model.prototype = {
 	,getCount: function() {
 		return Lambda.count(this._mParticle);
 	}
+	,getSpeed: function() {
+		return this._iSpeed;
+	}
+	,setSpeed: function(i) {
+		this._iSpeed = i;
+		this.onSpeedChange.trigger(this);
+	}
 	,addParticle: function(oParticle) {
 		oParticle.setId(this._oIdGen.generate());
 		this._mParticle.set(oParticle.getId(),oParticle);
@@ -2141,11 +3040,11 @@ particle_model_Model.prototype = {
 	}
 	,removeParticle: function(oParticle) {
 		if(oParticle.getId() == null) {
-			console.log("src/particle/model/Model.hx:136:","Warning: trying to remove particle with no identity");
+			console.log("src/particle/model/Model.hx:153:","Warning: trying to remove particle with no identity");
 			return;
 		}
-		console.log("src/particle/model/Model.hx:144:","removing #" + oParticle.getId());
-		console.log("src/particle/model/Model.hx:145:",haxe_CallStack.callStack());
+		console.log("src/particle/model/Model.hx:161:","removing #" + oParticle.getId());
+		console.log("src/particle/model/Model.hx:162:",haxe_CallStack.callStack());
 		this._mParticle.remove(oParticle.getId());
 		var _g = 0;
 		var _g1 = particle_model_DirectionTool.getAll();
@@ -2318,6 +3217,28 @@ particle_view_GridView.prototype = {
 		return this._oContainer;
 	}
 };
+var particle_view_Menu = function(oModel,oContainer) {
+	this._oModel = oModel;
+	this._oContainer = oContainer;
+	if(oContainer == null) {
+		throw new js__$Boot_HaxeError("!!");
+	}
+	this._oTemplate = new haxe_Template(haxe_Resource.getString("menu"));
+};
+particle_view_Menu.__name__ = true;
+particle_view_Menu.prototype = {
+	getContainer: function() {
+		return this._oContainer;
+	}
+	,getData: function() {
+		return { speed : this._oModel.getSpeed()};
+	}
+	,update: function() {
+		var tmp = this._oTemplate;
+		var tmp1 = this.getData();
+		this._oContainer.innerHTML = tmp.execute(tmp1);
+	}
+};
 var particle_view_ParticleView = function(oParticle) {
 	this._oParticle = oParticle;
 	this._oContainer = new PIXI.Container();
@@ -2391,6 +3312,7 @@ var particle_view_View = function(oModel,oStage,oInteractionManager) {
 	this._oStage = oStage;
 	this._oStage.scale.x = 10;
 	this._oStage.scale.y = 10;
+	this._oMenu = new particle_view_Menu(this._oModel,window.document.getElementById("menu"));
 	var oGridView = new particle_view_GridView(200,100);
 	this._oStage.addChild(oGridView.getContainer());
 	this._mParticleView = new haxe_ds_IntMap();
@@ -2403,6 +3325,7 @@ var particle_view_View = function(oModel,oStage,oInteractionManager) {
 		_gthis._oDragged = null;
 	});
 	this.onParticleDragTo = new trigger_EventListener();
+	this._oMenu.update();
 };
 particle_view_View.__name__ = true;
 particle_view_View.prototype = {
@@ -2415,6 +3338,9 @@ particle_view_View.prototype = {
 	,toGridPosition: function(x,y) {
 		var oVector = this._oStage.toLocal(new PIXI.Point(x,y));
 		return new space_Vector2i(Math.floor(oVector.x),Math.floor(oVector.y));
+	}
+	,getMenu: function() {
+		return this._oMenu;
 	}
 	,setZoom: function(x,y,f) {
 		this._oStage.setTransform(x,y,f,f);
@@ -2447,10 +3373,10 @@ particle_view_View.prototype = {
 		var _this = this._mParticleView;
 		var key = oParticle.getId();
 		if(!_this.h.hasOwnProperty(key)) {
-			console.log("src/particle/view/View.hx:112:","WARING trying to remove #" + oParticle.getId());
+			console.log("src/particle/view/View.hx:121:","WARING trying to remove #" + oParticle.getId());
 			return;
 		}
-		console.log("src/particle/view/View.hx:115:","removing #" + oParticle.getId());
+		console.log("src/particle/view/View.hx:124:","removing #" + oParticle.getId());
 		var tmp = this._oStage;
 		var _this1 = this._mParticleView;
 		var key1 = oParticle.getId();
@@ -2468,7 +3394,7 @@ particle_view_View.prototype = {
 		this._oStage.addChild(oView.getContainer());
 		oView.getContainer().on("pointerdown",function() {
 			_gthis._oDragged = oView;
-			console.log("src/particle/view/View.hx:144:",_gthis._oDragged);
+			console.log("src/particle/view/View.hx:153:",_gthis._oDragged);
 		});
 		oView.update();
 		return oView;
@@ -2506,9 +3432,11 @@ trigger_EventListener.prototype = {
 function $getIterator(o) { if( o instanceof Array ) return HxOverrides.iter(o); else return o.iterator(); }
 function $bind(o,m) { if( m == null ) return null; if( m.__id__ == null ) m.__id__ = $global.$haxeUID++; var f; if( o.hx__closures__ == null ) o.hx__closures__ = {}; else f = o.hx__closures__[m.__id__]; if( f == null ) { f = m.bind(o); o.hx__closures__[m.__id__] = f; } return f; }
 $global.$haxeUID |= 0;
+if( String.fromCodePoint == null ) String.fromCodePoint = function(c) { return c < 0x10000 ? String.fromCharCode(c) : String.fromCharCode((c>>10)+0xD7C0)+String.fromCharCode((c&0x3FF)+0xDC00); }
 String.__name__ = true;
 Array.__name__ = true;
 Date.__name__ = "Date";
+haxe_Resource.content = [{ name : "menu", data : "DQo8YnV0dG9uIGRhdGEtYWN0aW9uPSJzdGVwIj4NCgkmY3VyYXJyOw0KPC9idXR0b24+DQo8YnV0dG9uIGRhdGEtYWN0aW9uPSJ0b2dnbGVfcGxheSI+DQoJOjppZiAoc3BlZWQgPT0gMCk6OiANCgkJJnJ0cmlmOyANCgk6OmVsc2U6OiANCgkJJnNxdWFyZjsgDQoJOjplbmQ6Og0KPC9idXR0b24+DQo8YnV0dG9uIGRhdGEtYWN0aW9uPSJzcGVlZCB1cCI+DQoJJnJ0cmlmOyZydHJpZjsNCjwvYnV0dG9uPg"},{ name : "grid_shader", data : "cHJlY2lzaW9uIG1lZGl1bXAgZmxvYXQ7DQoNCnVuaWZvcm0gZmxvYXQgdnB3OyAvLyBXaWR0aCwgaW4gcGl4ZWxzDQp1bmlmb3JtIGZsb2F0IHZwaDsgLy8gSGVpZ2h0LCBpbiBwaXhlbHMNCg0KdW5pZm9ybSB2ZWMyIG9mZnNldDsgLy8gZS5nLiBbLTAuMDIzNTAwMDAwMDAwMDAwNDM0IDAuOTc5NDAwMDAwMDAwMDAxN10sIGN1cnJlbnRseSB0aGUgc2FtZSBhcyB0aGUgeC95IG9mZnNldCBpbiB0aGUgbXZNYXRyaXgNCnVuaWZvcm0gdmVjMiBwaXRjaDsgIC8vIGUuZy4gWzUwIDUwXQ0KDQp2b2lkIG1haW4oKSB7DQogIGZsb2F0IGxYID0gZ2xfRnJhZ0Nvb3JkLnggLyB2cHc7DQogIGZsb2F0IGxZID0gZ2xfRnJhZ0Nvb3JkLnkgLyB2cGg7DQoNCiAgZmxvYXQgc2NhbGVGYWN0b3IgPSAxMDAwMC4wOw0KDQogIGZsb2F0IG9mZlggPSAoc2NhbGVGYWN0b3IgKiBvZmZzZXRbMF0pICsgZ2xfRnJhZ0Nvb3JkLng7DQogIGZsb2F0IG9mZlkgPSAoc2NhbGVGYWN0b3IgKiBvZmZzZXRbMV0pICsgKDEuMCAtIGdsX0ZyYWdDb29yZC55KTsNCg0KICBpZiAoaW50KG1vZChvZmZYLCBwaXRjaFswXSkpID09IDAgfHwNCiAgICAgIGludChtb2Qob2ZmWSwgcGl0Y2hbMV0pKSA9PSAwKSB7DQogICAgZ2xfRnJhZ0NvbG9yID0gdmVjNCgwLjAsIDAuMCwgMC4wLCAwLjUpOw0KICB9IGVsc2Ugew0KICAgIGdsX0ZyYWdDb2xvciA9IHZlYzQoMS4wLCAxLjAsIDEuMCwgMS4wKTsNCiAgfQ0KfQ"}];
 var __map_reserved = {};
 Object.defineProperty(js__$Boot_HaxeError.prototype,"message",{ get : function() {
 	return String(this.val);
@@ -2531,6 +3459,15 @@ Perf.TOP_RIGHT = "TR";
 Perf.BOTTOM_LEFT = "BL";
 Perf.BOTTOM_RIGHT = "BR";
 Perf.DELAY_TIME = 4000;
+haxe_Template.splitter = new EReg("(::[A-Za-z0-9_ ()&|!+=/><*.\"-]+::|\\$\\$([A-Za-z0-9_-]+)\\()","");
+haxe_Template.expr_splitter = new EReg("(\\(|\\)|[ \r\n\t]*\"[^\"]*\"[ \r\n\t]*|[!+=/><*.&|-]+)","");
+haxe_Template.expr_trim = new EReg("^[ ]*([^ ]+)[ ]*$","");
+haxe_Template.expr_int = new EReg("^[0-9]+$","");
+haxe_Template.expr_float = new EReg("^([+-]?)(?=\\d|,\\d)\\d*(,\\d*)?([Ee]([+-]?\\d+))?$","");
+haxe_Template.globals = { };
+haxe_Template.hxKeepArrayIterator = HxOverrides.iter([]);
+haxe_crypto_Base64.CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+haxe_crypto_Base64.BYTES = haxe_io_Bytes.ofString(haxe_crypto_Base64.CHARS);
 pixi_plugins_app_Application.AUTO = "auto";
 pixi_plugins_app_Application.RECOMMENDED = "recommended";
 pixi_plugins_app_Application.CANVAS = "canvas";

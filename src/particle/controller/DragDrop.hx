@@ -10,7 +10,7 @@ import space.Vector2i;
  * ...
  * @author 
  */
-class DragDrop extends Controller  {
+class DragDrop extends AController  {
 
 	var _oMove :Move;
 	var _oDragged :ParticleView;

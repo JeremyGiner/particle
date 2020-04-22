@@ -39,7 +39,7 @@ class Move implements IProcedure {
 		_oModel = oModel;
 		_oView = oView;
 		
-		_iMaxSpeed = 10;
+		_iMaxSpeed = 1;
 		_iCurrentSpeed = 1;
 		
 		_oCollisionHandler = new CollisionHandler( _oModel );

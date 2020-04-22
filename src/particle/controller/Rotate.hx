@@ -13,7 +13,7 @@ import particle.view.View;
  * ...
  * @author 
  */
-class Rotate extends Controller {
+class Rotate extends AController {
 
 	var mouse_x :Int;
 	var mouse_y :Int;

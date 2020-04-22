@@ -1,5 +1,5 @@
 package particle.controller.process;
-import particle.controller.Controller;
+import particle.controller.AController;
 import particle.model.Direction;
 import particle.model.Particle;
 import space.Vector2i;

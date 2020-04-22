@@ -1,5 +1,6 @@
 package particle.view;
 import haxe.ds.IntMap;
+import js.Browser;
 import particle.model.Model;
 import pixi.core.math.Point;
 import pixi.core.textures.Texture;
@@ -18,6 +19,8 @@ class View {
 	
 	var _oModel :Model;
 	
+	var _oMenu :Menu;
+	
 	var _oStage :Container;
 	var _mParticleView :IntMap<ParticleView>;
 	
@@ -33,7 +36,7 @@ class View {
 		_oStage = oStage;
 		_oStage.scale.x = 10;
 		_oStage.scale.y = 10;
-		
+		_oMenu = new Menu( _oModel, Browser.document.getElementById('menu') );
 		
 		var oGridView = new GridView(200,100);
 		_oStage.addChild(oGridView.getContainer());
@@ -58,6 +61,8 @@ class View {
 		
 		
 		onParticleDragTo = new EventListener<DragTo>();
+		
+		_oMenu.update();
 	}
 //_____________________________________________________________________________
 //	Accessor
@@ -76,6 +81,10 @@ class View {
 			Math.floor(oVector.x),
 			Math.floor(oVector.y)
 		);
+	}
+	
+	public function getMenu() {
+		return _oMenu;
 	}
 	
 //_____________________________________________________________________________

@@ -13,6 +13,7 @@
 
 # Resource
 --resource src/particle/shader/grid_shader@grid_shader
+--resource src/particle/template/menu.template.html@menu
 
 # JavaScript target
 -js build/client/game.js

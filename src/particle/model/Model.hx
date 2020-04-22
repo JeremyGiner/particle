@@ -30,18 +30,24 @@ class Model {
 	var _mParticleByPosition :IMap<Vector2i,Particle>;
 	var _mParticleByType :IMap<ParticleType,IMap<Int,Particle>>;
 	
+	var _iSpeed :Int;
+	
 	//var oOutBoundIndexer :IIndexer;
 	
 	
 	public var onCreate :EventListener<Particle>;
 	public var onDelete :EventListener<Particle>;
 	public var onUpdate :EventListener<ParticleUpdateEvent>;
+	public var onSpeedChange :EventListener<Model>;
 
 	public function new() {
+		
+		_iSpeed = 0;
 		
 		onCreate = new EventListener();
 		onDelete = new EventListener();
 		onUpdate = new EventListener();
+		onSpeedChange = new EventListener();
 		
 		_oGrid = new Grid(100,50);
 		_oIdGen = new UniqueIdGenerator();
@@ -98,8 +104,19 @@ class Model {
 		return Lambda.count(_mParticle);
 	}
 	
+		
+	public function getSpeed() {
+		return _iSpeed;
+	}
+	
 //_____________________________________________________________________________
 //    Modifier
+
+
+	public function setSpeed( i :Int ) {
+		_iSpeed = i;
+		onSpeedChange.trigger( this );
+	}
 
 	public function addParticle( oParticle :Particle ) {
 		oParticle.setId( _oIdGen.generate() );

@@ -1,5 +1,5 @@
 package particle.controller.process;
-import particle.controller.Controller;
+import particle.controller.AController;
 import particle.model.Particle;
 import sweet.functor.IProcedure;
 import particle.model.ParticleType;
@@ -9,7 +9,7 @@ import particle.model.Direction.DirectionTool;
  * ...
  * @author 
  */
-class RouterBehavior extends Controller implements IProcedure {
+class RouterBehavior extends AController implements IProcedure {
 
 	public function process() {
 		

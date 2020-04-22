@@ -2,6 +2,7 @@ package particle;
 
 import js.Function;
 import js.Lib;
+import particle.controller.Controller;
 import particle.controller.DragDrop;
 import particle.controller.Presenter;
 import particle.controller.Rotate;
@@ -46,30 +47,18 @@ class Main extends Application {
 		//transparent = true;
 		antialias = false;
 		onUpdate = _animate;
-		super.start();
+		super.start('auto',
+			Browser.document.getElementById('container-game'),
+			cast Browser.document.getElementById('canva-game')
+		);
 		
 		
 		_oModel = new Model();
 		_oView = new View( _oModel, stage, this.renderer.plugins.interaction);
 		
+		new Controller( _oModel, _oView );
 		
-		new Presenter( _oModel, _oView );
-		_aProcess = [
-			new MapBound( _oModel, _oView ), 
-			new Move( _oModel, _oView ), 
-			new Spawn( _oModel, _oView ), 
-			//new SpaceRelativity( _oModel, _oView ),
-			new GeneratorSpawnBehavior( _oModel, _oView ),
-			new PusherBehavior( _oModel, _oView ),
-			new RouterBehavior( _oModel, _oView ),
-			new WallGeneratorBehavior( _oModel, _oView ),
-			new FabricatorBehavior( _oModel, _oView ),
-			new MultiplexerBehavior( _oModel, _oView ),
-		];
-
-		new DragDrop( _oModel, _oView, cast _aProcess[0] );
-		new Zoom( _oView );
-		new Rotate(_oModel, _oView );
+		
 		
 		
 		//var oTexture = Texture.from("asset/1.png");
@@ -93,24 +82,6 @@ class Main extends Application {
 			//stage.addChild(_graphic);
 		//}
 		//}
-		trace('setting up');
-		var bProcessing = false;
-		var t = null;
-		t = Browser.window.setInterval(function() {
-			if ( bProcessing == true )
-				trace('[WARNING] skipping processing');
-			bProcessing = true;
-			//try {
-				for ( oProcess in _aProcess ) 
-					oProcess.process();
-			//} catch ( e :Dynamic ) {
-				//Browser.window.clearInterval(t);
-				//throw e;
-			//}
-			bProcessing = false;
-		},50);
-		//var timer = new haxe.Timer(1000); // 1000ms delay
-		//timer.run = 
 	}
 
 	function _animate(e:Float) {

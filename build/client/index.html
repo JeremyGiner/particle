@@ -13,10 +13,39 @@
 
 	<style>
 		html,body { margin: 0; padding: 0; width: 100%; height: 100%; }
+		
+		.row {
+			display: flex;
+			width: 100%
+		}
+		.col {
+			flex: 1 1 auto;
+			
+		}
+		.col-auto {
+			flex: 0 0 auto;
+			
+		}
+		#menu {
+			background-color: white;
+			padding: 1em;
+		}
+		#canva-game {
+			width: 100% !important;
+			height: 100vh !important;
+		}
 	</style>
 
 </head>
 <body>
+	<div class="row">
+	<div id="container-game" class="col">
+		<canvas id="canva-game"></canvas>
+	</div>
+	<div id="menu" class="col-auto">
+		Menu
+	</div>
+	</div>
 	<script type="text/javascript" src="game.js"></script>
 </body>
 </html>
