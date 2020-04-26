@@ -30,24 +30,31 @@ class Model {
 	var _mParticleByPosition :IMap<Vector2i,Particle>;
 	var _mParticleByType :IMap<ParticleType,IMap<Int,Particle>>;
 	
+	var _oSelected :Particle;
+	
 	var _iSpeed :Int;
 	
 	//var oOutBoundIndexer :IIndexer;
-	
 	
 	public var onCreate :EventListener<Particle>;
 	public var onDelete :EventListener<Particle>;
 	public var onUpdate :EventListener<ParticleUpdateEvent>;
 	public var onSpeedChange :EventListener<Model>;
+	public var onSelectionChange :EventListener<Particle>;
 
+//_____________________________________________________________________________
+//    Constructor
+	
 	public function new() {
 		
+		_oSelected = null;
 		_iSpeed = 0;
 		
 		onCreate = new EventListener();
 		onDelete = new EventListener();
 		onUpdate = new EventListener();
 		onSpeedChange = new EventListener();
+		onSelectionChange = new EventListener();
 		
 		_oGrid = new Grid(100,50);
 		_oIdGen = new UniqueIdGenerator();
@@ -104,6 +111,9 @@ class Model {
 		return Lambda.count(_mParticle);
 	}
 	
+	public function getSelection() {
+		return _oSelected;
+	}
 		
 	public function getSpeed() {
 		return _iSpeed;
@@ -111,6 +121,11 @@ class Model {
 	
 //_____________________________________________________________________________
 //    Modifier
+
+	public function setSelection( oParticle :Particle ) {
+		_oSelected = oParticle;
+		onSelectionChange.trigger( _oSelected );
+	}
 
 
 	public function setSpeed( i :Int ) {
@@ -162,6 +177,8 @@ class Model {
 		trace(CallStack.callStack());
 		
 		
+		
+		
 		// Remove from indexer
 		_mParticle.remove( oParticle.getId() );
 		for(  oDirection in DirectionTool.getAll() ) {
@@ -173,6 +190,10 @@ class Model {
 		_mParticleByPosition.remove( oParticle.getPosition() );
 		_mParticleByType.get(oParticle.getType()).remove( oParticle.getId() );
 		
+		if ( _oSelected == oParticle ) {
+			_oSelected = null;
+			onSelectionChange.trigger(_oSelected);
+		}
 		onDelete.trigger( oParticle );
 	}
 	

@@ -90,7 +90,7 @@ class Controller extends AController {
 			
 			_oTimer = Timer.delay(
 				processGameStep, 
-				Math.ceil( 50 / _oModel.getSpeed() )
+				Math.ceil( 400 / _oModel.getSpeed() )
 			);
 		}
 		

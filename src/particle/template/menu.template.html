@@ -1,14 +1,24 @@
+<div>
+	<button data-action="step">
+		&curarr;
+	</button>
+	<button data-action="toggle_play">
+		::if (speed == 0):: 
+			&rtrif; 
+		::else:: 
+			&squarf; 
+		::end::
+	</button>
+	<button data-action="speed up">
+		&rtrif;&rtrif;
+	</button>
+</div>
 
-<button data-action="step">
-	&curarr;
-</button>
-<button data-action="toggle_play">
-	::if (speed == 0):: 
-		&rtrif; 
-	::else:: 
-		&squarf; 
+<div>
+	::if (selected != null )::
+		::selected::
 	::end::
-</button>
-<button data-action="speed up">
-	&rtrif;&rtrif;
-</button>
+</div>
+<div>
+	::position.x::;::position.y::
+</div>

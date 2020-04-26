@@ -77,9 +77,14 @@ class ParticleView {
 		_oBody.clear();
 		_oBody.buttonMode = true;
 		_oBody.interactive = true;
-		_oBody.lineStyle(0.2,_oParticle.getEnergy() == 1 ? 0xFFFFFF : 0x555555,1);
+		
 		_oBody.beginFill(getTypeColor( _oParticle.getType()), 1);
-		_oBody.drawRect(-(1-0.2)/2,-(1-0.2)/2, 1-0.2, 1-0.2);
+		if ( _oParticle.getType() == ParticleType.energy_echo ) {
+			_oBody.drawCircle(0, 0, 0.25);
+		} else {
+			_oBody.lineStyle(0.2,_oParticle.getEnergy() == 1 ? 0xFFFFFF : 0x555555,1);
+			_oBody.drawRect( -(1 - 0.2) / 2, -(1 - 0.2) / 2, 1 - 0.2, 1 - 0.2);
+		}
 		_oBody.endFill();
 		
 		

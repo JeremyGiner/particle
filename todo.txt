@@ -3,15 +3,16 @@ make block creation harder and cosume more energy
 
 center of it all
 
+
+
 menu
-	game speed
-	particle selection
+	particle description
 
 drag drop 
 	pause on drag
 	
-enact energy change after loop
-zoom out of center screen
+zoom 
+	out of center screen
 
 scenario
 	tutorial 1 
@@ -21,6 +22,11 @@ scenario
 	tutorial 2
 		- create factory with limited turn to a shipping block
 		- 
+	defeat the moss
+		- 
+	traveler
+		- create compass, travel toward goal
+	
 ________________________
 
 COMPONENT

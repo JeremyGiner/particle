@@ -1,7 +1,9 @@
 package particle.view;
 import haxe.ds.IntMap;
 import js.Browser;
+import js.html.CanvasElement;
 import particle.model.Model;
+import pixi.core.Application;
 import pixi.core.math.Point;
 import pixi.core.textures.Texture;
 import particle.model.Particle;
@@ -19,6 +21,7 @@ class View {
 	
 	var _oModel :Model;
 	
+	var _oPixi :Application;
 	var _oMenu :Menu;
 	
 	var _oStage :Container;
@@ -31,9 +34,23 @@ class View {
 //_____________________________________________________________________________
 //	Constuctor
 	
-	public function new( oModel :Model, oStage :Container, oInteractionManager :InteractionManager  ) {
+	public function new( 
+		oModel :Model
+	) {
+		
+		var oCanvas :CanvasElement = cast Browser.document.getElementById('canva-game');
+		_oPixi = new Application({
+			width: oCanvas.clientWidth,
+			height: oCanvas.clientHeight,
+			view: oCanvas,
+		});
+		Browser.window.addEventListener('resize', function() {
+			_oPixi.renderer.resize(oCanvas.clientWidth,oCanvas.clientHeight);
+		});
+		
+		//_oPixi = oPixi;
 		_oModel = oModel;
-		_oStage = oStage;
+		_oStage = _oPixi.stage;
 		_oStage.scale.x = 10;
 		_oStage.scale.y = 10;
 		_oMenu = new Menu( _oModel, Browser.document.getElementById('menu') );
@@ -43,26 +60,13 @@ class View {
 		
 		_mParticleView = new IntMap<ParticleView>();
 		
-		oInteractionManager.on('pointerup', function( event ){
-			if ( _oDragged == null )
-				return;
-			var oVector = event.data.getLocalPosition(_oStage);
-			
-			onParticleDragTo.trigger({
-				particle: _oDragged.getParticle(),
-				position: new Vector2i(
-					Math.floor(oVector.x),
-					Math.floor(oVector.y)
-				),
-			});
-			_oDragged = null;
-		});
-		
 		
 		
 		onParticleDragTo = new EventListener<DragTo>();
 		
 		_oMenu.update();
+		
+		_oPixi.start();
 	}
 //_____________________________________________________________________________
 //	Accessor
@@ -76,11 +80,18 @@ class View {
 	}
 	
 	public function toGridPosition( x :Int, y :Int ) {
-		var oVector = _oStage.toLocal(new Point(x,y));
+		
+		var rx = Browser.window.innerWidth / _oPixi.screen.width;
+		var ry = Browser.window.innerHeight / _oPixi.screen.height;
+		
 		return new Vector2i(
-			Math.floor(oVector.x),
-			Math.floor(oVector.y)
+			Math.floor( ( rx *x - _oStage.x) / _oStage.scale.x ),
+			Math.floor((ry*y - _oStage.y) / _oStage.scale.y)
 		);
+	}
+	
+	public function getCanvas() {
+		return _oPixi.view;
 	}
 	
 	public function getMenu() {
@@ -132,7 +143,9 @@ class View {
 			throw '!!';
 	}
 	
-
+	public function updateSelection() {
+		_oMenu.update();
+	}
 		
 //_____________________________________________________________________________
 //	Process

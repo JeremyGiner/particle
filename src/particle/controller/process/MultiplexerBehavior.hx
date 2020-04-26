@@ -29,15 +29,14 @@ class MultiplexerBehavior extends AController implements IProcedure {
 			var oTarget = _oModel.getParticleByPosition( oTargetPosition );
 			if ( oTarget != null ) {
 				_oModel.addParticleEnergy( oTarget );
-				continue;
+			} else {
+				// Create particle
+				_oModel.addParticle( new Particle( 
+					oTargetPosition, 
+					oDirectionVector, 
+					ParticleType.energy_echo
+				) );
 			}
-			
-			// Create particle
-			_oModel.addParticle( new Particle( 
-				oTargetPosition, 
-				oDirectionVector, 
-				ParticleType.energy_echo
-			) );
 			
 			// Discharge
 			_oModel.addParticleEnergy( oParticle, -1 );

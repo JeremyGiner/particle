@@ -4,6 +4,7 @@ import haxe.Template;
 import js.html.Element;
 import particle.controller.Controller;
 import particle.model.Model;
+import space.Vector2i;
 
 /**
  * ...
@@ -15,6 +16,8 @@ class Menu {
 	var _oContainer :Element;
 	var _oTemplate :Template;
 	
+	var _oPosition :Vector2i;
+	
 	public function new(  oModel :Model, oContainer :Element ) {
 		_oModel = oModel;
 		_oContainer = oContainer;
@@ -24,6 +27,11 @@ class Menu {
 		_oTemplate = new Template( 
 			Resource.getString('menu')
 		);
+		_oPosition = new Vector2i();
+	}
+	
+	public function setPosition( o :Vector2i ) {
+		_oPosition = o;
 	}
 	
 	public function getContainer() {
@@ -33,6 +41,8 @@ class Menu {
 	public function getData() :Dynamic {
 		return {
 			speed: _oModel.getSpeed(),
+			selected: _oModel.getSelection() == null ? null: _oModel.getSelection().getId(),
+			position: _oPosition,
 		};
 	}
 	

@@ -21,10 +21,13 @@ class GeneratorSpawnBehavior extends AController implements IProcedure {
 		for ( oDirection in DirectionTool.getAll() ) {
 			var oVectorDirection = DirectionTool.getVector( oDirection );
 			var oSpawnPosition = oParticle.getPosition().clone().vector_add( oVectorDirection );
-		
+			var oTarget = _oModel.getParticleByPosition( oSpawnPosition );
+			
 			// Case : spawn blocked
-			if ( _oModel.getParticleByPosition( oSpawnPosition ) != null )
+			if ( oTarget != null ) {
+				_oModel.addParticleEnergy( oTarget );
 				continue;
+			}
 			
 			//Timer.measure(function() {
 				 _oModel.addParticle( createParticle(
