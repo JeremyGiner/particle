@@ -22,10 +22,6 @@ class DragDrop extends AController  {
 		
 		super(oModel, oView);
 		
-		//_oView.onParticleMove.attach( this );
-		oView.onParticleDragTo.add(function( o :DragTo ) {
-			_oMove.addUserMove(o.particle, o.position);
-		});
 		oModel.onDelete.add(function( oParticle :Particle ) {
 			if ( _oDragged!= null && _oDragged.getParticle() ==  oParticle )
 				_oDragged = null;

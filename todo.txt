@@ -3,6 +3,7 @@ make block creation harder and cosume more energy
 
 center of it all
 
+multiplexer V
 
 
 menu
@@ -13,6 +14,9 @@ drag drop
 	
 zoom 
 	out of center screen
+	
+animation
+	
 
 scenario
 	tutorial 1 

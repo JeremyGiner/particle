@@ -62,4 +62,22 @@ class DirectionTool {
 		return vector.get(oDirection);
 		
 	}
+	
+	static public function getRotateCounterClockwise( oDirection :Direction ) {
+		switch( oDirection ) {
+			case UP: return Direction.LEFT;
+			case RIGHT: return Direction.UP;
+			case DOWN: return Direction.RIGHT;
+			case LEFT: return Direction.DOWN;
+		}
+	}
+	
+	static public function getRotateClockwise( oDirection :Direction ) {
+		switch( oDirection ) {
+			case UP: return Direction.RIGHT;
+			case RIGHT: return Direction.DOWN;
+			case DOWN: return Direction.LEFT;
+			case LEFT: return Direction.UP;
+		}
+	}
 }

@@ -1,4 +1,5 @@
 package particle.model;
+import haxe.IntTool;
 import pixi.core.display.Container;
 import space.Vector2i;
 
@@ -6,7 +7,7 @@ import space.Vector2i;
  * ...
  * @author 
  */
-class Particle {
+class Particle implements IParticle {
 
 	var _iId :Int;
 	
@@ -44,12 +45,10 @@ class Particle {
 	}
 
 	public function getVelocity() {
-		
 		return _oVelocity;
 	}
 	
 	public function getPosition() {
-		
 		return _oPosition;
 	}
 	
@@ -65,6 +64,13 @@ class Particle {
 		return _oDirection;
 	}
 	
+	public function isAbsorbable( oParticle :Particle ) {
+		if ( oParticle.getType() == ParticleType.energy_echo )
+			return true;
+		return false;
+	}
+	
+	
 //_____________________________________________________________________________
 //    Modifier
 	
@@ -74,12 +80,10 @@ class Particle {
 	
 	public function setPosition( oPosition :Vector2i ) {
 		_oPosition = oPosition;
-		return this;
 	}
 	
 	public function setVelocity( oVector :Vector2i ) {
 		_oVelocity = oVector;
-		return this;
 	}
 	
 	public function setType( iType :ParticleType ) {
@@ -87,9 +91,11 @@ class Particle {
 	}
 	
 	public function addEnergy( i :Int ) {
-		_iEnergy = 1;
-		if ( i < 0 )
-			_iEnergy = 0;
+		_iEnergy += i;
+		_iEnergy = IntTool.max(_iEnergy, 0);
+		_iEnergy = IntTool.min(_iEnergy, 
+			getType() == ParticleType.storage ? 9 : 1
+		);
 	}
 	
 	public function setDirection( oDirection :Direction ) {

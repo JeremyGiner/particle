@@ -4,11 +4,9 @@ package particle.model;
  * ...
  * @author 
  */
-class ParticleGroup 
-{
+class ParticleGroup implements IParticle {
 
-	public function new() 
-	{
+	public function new() {
 		
 	}
 	

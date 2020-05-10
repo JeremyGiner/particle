@@ -245,6 +245,36 @@ class Model {
 		
 		onUpdate.trigger({particle: oParticle, field: 'energy', });
 	}
+	
+	
+	public function processModifier( a :IMap<Int,Array<Modifier<Dynamic>>> ) {
+		
+		// Reset indexer
+		for ( aModifier in a ) 
+		for ( oModifier in aModifier ) {
+		
+			_mParticleByPosition.remove( oModifier.particle.getPosition() );
+		}
+		
+		// Update particle
+		for ( aModifier in a ) {
+			
+			for ( oModifier in aModifier ) {
+				oModifier.modifier( oModifier.value );
+				
+			}
+			
+			_mParticleByPosition.set( 
+				aModifier[0].particle.getPosition(), 
+				aModifier[0].particle 
+			);
+		}
+		
+		// Trigger event
+		for ( aModifier in a ) {
+			onUpdate.trigger({particle: aModifier[0].particle, field: 'position', });
+		}
+	}
 }
 
 
@@ -265,4 +295,10 @@ class Vector2iComp implements IComparator<Vector2i> {
 typedef ParticleUpdateEvent = {
 	var particle :Particle;
 	var field :String;
+}
+
+typedef Modifier<C> = {
+	var particle :Particle;
+	var modifier :C->Void;
+	var value :C;
 }

@@ -31,15 +31,21 @@ class Spawn implements IProcedure {
 			new Vector2i(),
 			ParticleType.generator
 		));
+		
+		_oModel.addParticle(new Particle(
+			new Vector2i(30,30),
+			new Vector2i(),
+			ParticleType.fabricator
+		));
 		_oModel.addParticle(new Particle(
 			new Vector2i(31,30),
 			new Vector2i(),
 			ParticleType.wall_generator
 		));
 		_oModel.addParticle(new Particle(
-			new Vector2i(30,30),
+			new Vector2i(32,30),
 			new Vector2i(),
-			ParticleType.fabricator
+			ParticleType.wheel
 		));
 	}
 	

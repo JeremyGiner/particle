@@ -22,22 +22,32 @@ class Presenter extends AController {
 	}
 	
 	override public function init() {
+		
+		// Model to particle view
 		_oModel.onCreate.add(function( oParticle :Particle ) {
 			_oView.addParticle( oParticle );
 		});
 		
 		_oModel.onDelete.add(function( oParticle :Particle ){
 			_oView.removeParticle( oParticle );
+			_updateSelectionView();
 		});
-		
 		_oModel.onUpdate.add(function( oEvent :ParticleUpdateEvent  ){
 			_oView.updateParticle( oEvent.particle );
+			_updateSelectionView();
 		});
 		
+		// Model to menu
 		_oModel.onSpeedChange.add(function( oModel :Model ) {
 			_oView.getMenu().update();
 		});
 		
+		// Model to selection view
+		_oModel.onSelectionChange.add( function( oParticle :Particle ) {
+			_updateSelectionView();
+		});
+		
+		// Menu input
 		_oView.getMenu().getContainer().addEventListener('click', function( oEvent :MouseEvent ) {
 			if ( !Std.is( oEvent.originalTarget, Element ) )
 				return;
@@ -56,6 +66,13 @@ class Presenter extends AController {
 			}
 				
 		});
+		
+		
+	}
+	
+	function _updateSelectionView() {
+		var oPos = _oModel.getSelection() == null ? null : _oModel.getSelection().getPosition();
+		_oView.getSelectionView().setPosition( oPos );
 	}
 	
 }

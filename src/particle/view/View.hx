@@ -1,5 +1,6 @@
 package particle.view;
 import haxe.ds.IntMap;
+import haxe.ds.StringMap;
 import js.Browser;
 import js.html.CanvasElement;
 import particle.model.Model;
@@ -12,6 +13,8 @@ import pixi.interaction.InteractionEvent;
 import pixi.interaction.InteractionManager;
 import space.Vector2i;
 import trigger.EventListener;
+import particle.view.pixi.Animation;
+import particle.view.pixi.Cadence;
 
 /**
  * ...
@@ -23,9 +26,13 @@ class View {
 	
 	var _oPixi :Application;
 	var _oMenu :Menu;
+	var _oSelectionView :SelectionView;
 	
 	var _oStage :Container;
 	var _mParticleView :IntMap<ParticleView>;
+	
+	var _mAnimation :IntMap<Array<AnimationInfo>>;
+	var _mCadence :StringMap<Cadence>;
 	
 	var _oDragged :ParticleView = null;
 	
@@ -47,6 +54,7 @@ class View {
 		Browser.window.addEventListener('resize', function() {
 			_oPixi.renderer.resize(oCanvas.clientWidth,oCanvas.clientHeight);
 		});
+		_oPixi.ticker.add(this.animate);
 		
 		//_oPixi = oPixi;
 		_oModel = oModel;
@@ -54,13 +62,18 @@ class View {
 		_oStage.scale.x = 10;
 		_oStage.scale.y = 10;
 		_oMenu = new Menu( _oModel, Browser.document.getElementById('menu') );
+		_oSelectionView = new SelectionView();
+		_oStage.addChild( _oSelectionView.getContainer() );
 		
 		var oGridView = new GridView(200,100);
 		_oStage.addChild(oGridView.getContainer());
 		
 		_mParticleView = new IntMap<ParticleView>();
-		
-		
+		_mAnimation = new IntMap();
+		_mCadence = [
+			'loop' => new Cadence( 1000, Date.now().getTime(), true ),
+			'move' => new Cadence( 1000, Date.now().getTime()  ),
+		];
 		
 		onParticleDragTo = new EventListener<DragTo>();
 		
@@ -98,6 +111,10 @@ class View {
 		return _oMenu;
 	}
 	
+	public function getSelectionView() {
+		return _oSelectionView;
+	}
+	
 //_____________________________________________________________________________
 //	Modifier
 	
@@ -110,7 +127,9 @@ class View {
 		if ( _mParticleView.exists( oParticle.getId() ) )
 			throw '!!!';
 		
-		_mParticleView.set( oParticle.getId(), _createParticleView(oParticle) );
+		var oParticleView = _createParticleView(oParticle);
+		_mParticleView.set( oParticle.getId(), oParticleView );
+		_updateParticleView( oParticleView );
 	}
 	
 	public function updateParticle( oParticle :Particle ) {
@@ -118,7 +137,8 @@ class View {
 		if ( !_mParticleView.exists( oParticle.getId() ) )
 			throw '!!';
 		
-		_mParticleView.get( oParticle.getId() ).update();
+		var oParticleView = _mParticleView.get( oParticle.getId() );
+		_updateParticleView( oParticleView );
 		
 	}
 	
@@ -137,6 +157,7 @@ class View {
 			_mParticleView.get( oParticle.getId() ).getContainer()
 		);
 		_mParticleView.remove( oParticle.getId() );
+		_mAnimation.remove( oParticle.getId() );
 		
 		// Debug
 		if ( _oModel.getCount() != Lambda.count(_mParticleView) )
@@ -150,6 +171,14 @@ class View {
 //_____________________________________________________________________________
 //	Process
 
+	public function animate() {
+		for ( aAnimation in _mAnimation ) 
+		for ( oAnimationInfo in aAnimation ) {
+			var oCadence = _mCadence.get(oAnimationInfo.cadence);// TODO : check for null
+			oAnimationInfo.animation.animate( oCadence.getFrame() );
+		}
+	}
+
 	public function update() {
 
 	}
@@ -157,18 +186,18 @@ class View {
 //_____________________________________________________________________________
 //	Sub-routine
 
+	function _updateParticleView( oParticleView :ParticleView ) {
+		oParticleView.update();
+		_mAnimation.set( 
+			oParticleView.getParticle().getId(), 
+			oParticleView.getAnimationAr() 
+		);
+	}
+
 	
 	function _createParticleView( oParticle :Particle ) {
 		var oView = new ParticleView( oParticle );
 		_oStage.addChild( oView.getContainer() );
-		oView.getContainer().on('pointerdown', function() {
-			_oDragged = oView;
-			trace(_oDragged);
-		});
-		//oView.getContainer().on('pointermove', function() {
-			////todo
-		//});
-		oView.update();
 		
 		return oView;
 	}
@@ -179,3 +208,9 @@ typedef DragTo = {
 	var particle :Particle;
 	var position :Vector2i;
 }
+
+
+typedef AnimationInfo = {
+	var animation :Animation;
+	var cadence :String;
+};

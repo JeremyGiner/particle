@@ -32,6 +32,7 @@ class FabricatorBehavior extends ATargeterBehavior {
 			case ParticleType.multiplexer: return ParticleType.pusher;
 			case ParticleType.pusher: return ParticleType.wall_generator;
 			case ParticleType.wall_generator: return ParticleType.fabricator;
+			case ParticleType.fabricator: return ParticleType.wheel;
 			default:
 				return oType;
 			

@@ -19,6 +19,7 @@ enum abstract ParticleType(String) {
 	var generator;
 	var redirect;
 	var multiplexer;
+	var multiplexer_V;
 	var storage;
 
 
@@ -33,6 +34,7 @@ enum abstract ParticleType(String) {
 	var bounder;
 	var propulsor;
 	var wall_generator;
+	var wheel;
 
 
 	//OTHER

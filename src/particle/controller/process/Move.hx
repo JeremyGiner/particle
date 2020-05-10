@@ -1,4 +1,6 @@
 package particle.controller.process;
+import haxe.ds.BalancedTree;
+import haxe.ds.BalancedTreeFunctor;
 import haxe.ds.List;
 import particle.controller.tool.CollisionHandler;
 import particle.model.Model;
@@ -31,10 +33,10 @@ class Move implements IProcedure {
 	
 	var _oCollisionHandler :CollisionHandler;
 	
-	var _lUserMove :List<PairParticleVector>;
+//_____________________________________________________________________________
+// Constructor
 
 	public function new( oModel :Model, oView :View ) {
-		_lUserMove = new List();
 		
 		_oModel = oModel;
 		_oView = oView;
@@ -45,28 +47,77 @@ class Move implements IProcedure {
 		_oCollisionHandler = new CollisionHandler( _oModel );
 	}
 	
-	public function addUserMove( oParticle :Particle, oPos :Vector2i ) {
-		_lUserMove.add({particle: oParticle, vector: oPos });
-	}
+//_____________________________________________________________________________
+// Process
 
 	
 	public function process() {
 		
-		var oPair :PairParticleVector;
-		while ( (oPair = _lUserMove.pop()) != null ) {
+		// Get futur pos
+		var mParticleByFuturPosition = new BalancedTreeFunctor<Vector2i,Particle>( new Vector2iComp() );
+		var mModifier = new BalancedTree<Int,Array<Modifier<Vector2i>>>();
+		for ( oParticle in _oModel.getParticleAll() ) { // TODO : only process particle with velocity
 			
-			var oParticle = oPair.particle;
+			// Get position
+			var oPosition = oParticle.getPosition().clone();
+			oPosition.vector_add( oParticle.getVelocity() );
 			
-			// Check if partcile wasn't removed by previous calls
-			if( _oModel.getParticle( oParticle.getId() ) == null )
-				return;
+			// Process direct collision
+			var oParticleB = mParticleByFuturPosition.get( oPosition );
+			if ( oParticleB != null ) {
+				if ( oParticle.isAbsorbable( oParticleB ) ) {
+					
+					mParticleByFuturPosition.remove( oPosition );
+					mModifier.remove( oParticleB.getId() );
+					_oModel.addParticleEnergy( oParticle );
+					_oModel.removeParticle( oParticleB );
+				}
+				
+				if ( oParticleB.isAbsorbable( oParticle ) ) {
+					_oModel.addParticleEnergy( oParticleB );
+					_oModel.removeParticle( oParticle );
+					continue;
+				}
+			}
 			
-			if ( collisionCheck( oParticle, oPair.vector ) )
-				return;
+			mModifier.set( 
+				oParticle.getId(), 
+				[{ value: oPosition, particle: oParticle, modifier: oParticle.setPosition }] 
+			);
+			mParticleByFuturPosition.set(oPosition, oParticle);
 			
-			_oModel.setParticlePosition( oParticle, oPair.vector );
 		}
 		
+		var mTemp = new BalancedTree<Int,Array<Modifier<Vector2i>>>();
+		for ( aModifier in mModifier ) {
+			
+			var oParticle = aModifier[0].particle;
+			var oFuturPosition = aModifier[0].value;
+			
+			// Case : cross path
+			var oParticleA = _oModel.getParticleByPosition( oFuturPosition ); 
+			var oParticleB = mParticleByFuturPosition.get( oParticle.getPosition() ); 
+			if( oParticleA == oParticleB && oParticleA != null ) {
+				if ( oParticle.isAbsorbable( oParticleB ) ) {
+					
+					mParticleByFuturPosition.remove( oParticle.getPosition() );
+					mTemp.remove( oParticleB.getId() );
+					_oModel.addParticleEnergy( oParticle );
+					_oModel.removeParticle( oParticleB );
+				}
+				
+				if ( oParticleB.isAbsorbable( oParticle ) ) {
+					_oModel.addParticleEnergy( oParticleB );
+					_oModel.removeParticle( oParticle );
+					continue;
+				}
+			}
+			
+			mTemp.set(oParticle.getId(), aModifier);
+		}
+		
+		_oModel.processModifier( mTemp );
+		/*
 		// Get all 
 		for ( oDirection in DirectionTool.getAll() ) { 
 		
@@ -81,7 +132,7 @@ class Move implements IProcedure {
 			}
 		}
 		_iCurrentSpeed++;
-		if ( _iCurrentSpeed > _iMaxSpeed ) _iCurrentSpeed = 1;
+		if ( _iCurrentSpeed > _iMaxSpeed ) _iCurrentSpeed = 1;*/
 	}
 	
 	public function move( oDirection :Direction, oParticle :Particle) {

@@ -1048,134 +1048,6 @@ haxe_crypto_BaseCode.prototype = {
 		return out;
 	}
 };
-var haxe_ds_ArraySort = function() { };
-haxe_ds_ArraySort.__name__ = true;
-haxe_ds_ArraySort.sort = function(a,cmp) {
-	haxe_ds_ArraySort.rec(a,cmp,0,a.length);
-};
-haxe_ds_ArraySort.rec = function(a,cmp,from,to) {
-	var middle = from + to >> 1;
-	if(to - from < 12) {
-		if(to <= from) {
-			return;
-		}
-		var _g = from + 1;
-		var _g1 = to;
-		while(_g < _g1) {
-			var i = _g++;
-			var j = i;
-			while(j > from) {
-				if(cmp(a[j],a[j - 1]) < 0) {
-					haxe_ds_ArraySort.swap(a,j - 1,j);
-				} else {
-					break;
-				}
-				--j;
-			}
-		}
-		return;
-	}
-	haxe_ds_ArraySort.rec(a,cmp,from,middle);
-	haxe_ds_ArraySort.rec(a,cmp,middle,to);
-	haxe_ds_ArraySort.doMerge(a,cmp,from,middle,to,middle - from,to - middle);
-};
-haxe_ds_ArraySort.doMerge = function(a,cmp,from,pivot,to,len1,len2) {
-	var first_cut;
-	var second_cut;
-	var len11;
-	var len22;
-	if(len1 == 0 || len2 == 0) {
-		return;
-	}
-	if(len1 + len2 == 2) {
-		if(cmp(a[pivot],a[from]) < 0) {
-			haxe_ds_ArraySort.swap(a,pivot,from);
-		}
-		return;
-	}
-	if(len1 > len2) {
-		len11 = len1 >> 1;
-		first_cut = from + len11;
-		second_cut = haxe_ds_ArraySort.lower(a,cmp,pivot,to,first_cut);
-		len22 = second_cut - pivot;
-	} else {
-		len22 = len2 >> 1;
-		second_cut = pivot + len22;
-		first_cut = haxe_ds_ArraySort.upper(a,cmp,from,pivot,second_cut);
-		len11 = first_cut - from;
-	}
-	haxe_ds_ArraySort.rotate(a,cmp,first_cut,pivot,second_cut);
-	var new_mid = first_cut + len22;
-	haxe_ds_ArraySort.doMerge(a,cmp,from,first_cut,new_mid,len11,len22);
-	haxe_ds_ArraySort.doMerge(a,cmp,new_mid,second_cut,to,len1 - len11,len2 - len22);
-};
-haxe_ds_ArraySort.rotate = function(a,cmp,from,mid,to) {
-	if(from == mid || mid == to) {
-		return;
-	}
-	var n = haxe_ds_ArraySort.gcd(to - from,mid - from);
-	while(n-- != 0) {
-		var val = a[from + n];
-		var shift = mid - from;
-		var p1 = from + n;
-		var p2 = from + n + shift;
-		while(p2 != from + n) {
-			a[p1] = a[p2];
-			p1 = p2;
-			if(to - p2 > shift) {
-				p2 += shift;
-			} else {
-				p2 = from + (shift - (to - p2));
-			}
-		}
-		a[p1] = val;
-	}
-};
-haxe_ds_ArraySort.gcd = function(m,n) {
-	while(n != 0) {
-		var t = m % n;
-		m = n;
-		n = t;
-	}
-	return m;
-};
-haxe_ds_ArraySort.upper = function(a,cmp,from,to,val) {
-	var len = to - from;
-	var half;
-	var mid;
-	while(len > 0) {
-		half = len >> 1;
-		mid = from + half;
-		if(cmp(a[val],a[mid]) < 0) {
-			len = half;
-		} else {
-			from = mid + 1;
-			len = len - half - 1;
-		}
-	}
-	return from;
-};
-haxe_ds_ArraySort.lower = function(a,cmp,from,to,val) {
-	var len = to - from;
-	var half;
-	var mid;
-	while(len > 0) {
-		half = len >> 1;
-		mid = from + half;
-		if(cmp(a[mid],a[val]) < 0) {
-			from = mid + 1;
-			len = len - half - 1;
-		} else {
-			len = half;
-		}
-	}
-	return from;
-};
-haxe_ds_ArraySort.swap = function(a,i,j) {
-	var tmp = a[i];
-	a[i] = a[j];
-	a[j] = tmp;
-};
 var haxe_ds_BalancedTree = function() {
 };
 haxe_ds_BalancedTree.__name__ = true;
@@ -1854,9 +1726,6 @@ var particle_controller_DragDrop = function(oModel,oView,oMove) {
 	var _gthis = this;
 	this._oMove = oMove;
 	particle_controller_AController.call(this,oModel,oView);
-	oView.onParticleDragTo.add(function(o) {
-		_gthis._oMove.addUserMove(o.particle,o.position);
-	});
 	oModel.onDelete.add(function(oParticle) {
 		if(_gthis._oDragged != null && _gthis._oDragged.getParticle() == oParticle) {
 			_gthis._oDragged = null;
@@ -1903,12 +1772,17 @@ particle_controller_Presenter.prototype = $extend(particle_controller_AControlle
 		});
 		this._oModel.onDelete.add(function(oParticle1) {
 			_gthis._oView.removeParticle(oParticle1);
+			_gthis._updateSelectionView();
 		});
 		this._oModel.onUpdate.add(function(oEvent) {
 			_gthis._oView.updateParticle(oEvent.particle);
+			_gthis._updateSelectionView();
 		});
 		this._oModel.onSpeedChange.add(function(oModel) {
 			_gthis._oView.getMenu().update();
+		});
+		this._oModel.onSelectionChange.add(function(oParticle2) {
+			_gthis._updateSelectionView();
 		});
 		this._oView.getMenu().getContainer().addEventListener("click",function(oEvent1) {
 			if(!((oEvent1.originalTarget) instanceof HTMLElement)) {
@@ -1927,6 +1801,10 @@ particle_controller_Presenter.prototype = $extend(particle_controller_AControlle
 				break;
 			}
 		});
+	}
+	,_updateSelectionView: function() {
+		var oPos = this._oModel.getSelection() == null ? null : this._oModel.getSelection().getPosition();
+		this._oView.getSelectionView().setPosition(oPos);
 	}
 });
 var particle_controller_Rotate = function(oModel,oView) {
@@ -2037,6 +1915,8 @@ particle_controller_process_FabricatorBehavior.prototype = $extend(particle_cont
 	}
 	,getNextType: function(oType) {
 		switch(oType) {
+		case "fabricator":
+			return "wheel";
 		case "multiplexer":
 			return "pusher";
 		case "pusher":
@@ -2110,7 +1990,6 @@ particle_controller_process_MapBound.prototype = {
 	}
 };
 var particle_controller_process_Move = function(oModel,oView) {
-	this._lUserMove = new haxe_ds_List();
 	this._oModel = oModel;
 	this._oView = oView;
 	this._iMaxSpeed = 1;
@@ -2119,43 +1998,55 @@ var particle_controller_process_Move = function(oModel,oView) {
 };
 particle_controller_process_Move.__name__ = true;
 particle_controller_process_Move.prototype = {
-	addUserMove: function(oParticle,oPos) {
-		this._lUserMove.add({ particle : oParticle, vector : oPos});
-	}
-	,process: function() {
-		var oPair;
-		while(true) {
-			oPair = this._lUserMove.pop();
-			if(!(oPair != null)) {
-				break;
+	process: function() {
+		var mParticleByFuturPosition = new haxe_ds_BalancedTreeFunctor(new particle_model_Vector2iComp());
+		var mModifier = new haxe_ds_BalancedTree();
+		var oParticle = this._oModel.getParticleAll().iterator();
+		while(oParticle.hasNext()) {
+			var oParticle1 = oParticle.next();
+			var oPosition = oParticle1.getPosition().clone();
+			oPosition.vector_add(oParticle1.getVelocity());
+			var oParticleB = mParticleByFuturPosition.get(oPosition);
+			if(oParticleB != null) {
+				if(oParticle1.isAbsorbable(oParticleB)) {
+					mParticleByFuturPosition.remove(oPosition);
+					mModifier.remove(oParticleB.getId());
+					this._oModel.addParticleEnergy(oParticle1);
+					this._oModel.removeParticle(oParticleB);
+				}
+				if(oParticleB.isAbsorbable(oParticle1)) {
+					this._oModel.addParticleEnergy(oParticleB);
+					this._oModel.removeParticle(oParticle1);
+					continue;
+				}
 			}
-			var oParticle = oPair.particle;
-			if(this._oModel.getParticle(oParticle.getId()) == null) {
-				return;
-			}
-			if(this.collisionCheck(oParticle,oPair.vector)) {
-				return;
-			}
-			this._oModel.setParticlePosition(oParticle,oPair.vector);
+			mModifier.set(oParticle1.getId(),[{ value : oPosition, particle : oParticle1, modifier : $bind(oParticle1,oParticle1.setPosition)}]);
+			mParticleByFuturPosition.set(oPosition,oParticle1);
 		}
-		var _g = 0;
-		var _g1 = particle_model_DirectionTool.getAll();
-		while(_g < _g1.length) {
-			var oDirection = _g1[_g];
-			++_g;
-			var a = Lambda.array(this._oModel.getParticleListByVelDir(oDirection));
-			haxe_ds_ArraySort.sort(a,this.sortingFunc(oDirection));
-			var _g2 = 0;
-			while(_g2 < a.length) {
-				var oParticle1 = a[_g2];
-				++_g2;
-				this.move(oDirection,oParticle1);
+		var mTemp = new haxe_ds_BalancedTree();
+		var aModifier = mModifier.iterator();
+		while(aModifier.hasNext()) {
+			var aModifier1 = aModifier.next();
+			var oParticle2 = aModifier1[0].particle;
+			var oFuturPosition = aModifier1[0].value;
+			var oParticleA = this._oModel.getParticleByPosition(oFuturPosition);
+			var oParticleB1 = mParticleByFuturPosition.get(oParticle2.getPosition());
+			if(oParticleA == oParticleB1 && oParticleA != null) {
+				if(oParticle2.isAbsorbable(oParticleB1)) {
+					mParticleByFuturPosition.remove(oParticle2.getPosition());
+					mTemp.remove(oParticleB1.getId());
+					this._oModel.addParticleEnergy(oParticle2);
+					this._oModel.removeParticle(oParticleB1);
+				}
+				if(oParticleB1.isAbsorbable(oParticle2)) {
+					this._oModel.addParticleEnergy(oParticleB1);
+					this._oModel.removeParticle(oParticle2);
+					continue;
+				}
 			}
+			mTemp.set(oParticle2.getId(),aModifier1);
 		}
-		this._iCurrentSpeed++;
-		if(this._iCurrentSpeed > this._iMaxSpeed) {
-			this._iCurrentSpeed = 1;
-		}
+		this._oModel.processModifier(mTemp);
 	}
 	,move: function(oDirection,oParticle) {
 		if(this._oModel.getParticle(oParticle.getId()) == null) {
@@ -2238,24 +2129,32 @@ particle_controller_process_MultiplexerBehavior.__name__ = true;
 particle_controller_process_MultiplexerBehavior.__super__ = particle_controller_AController;
 particle_controller_process_MultiplexerBehavior.prototype = $extend(particle_controller_AController.prototype,{
 	process: function() {
-		var a = this._oModel.getParticleByType("multiplexer");
-		var oParticle = a.iterator();
+		var oParticle = this._oModel.getParticleByType("multiplexer").iterator();
 		while(oParticle.hasNext()) {
 			var oParticle1 = oParticle.next();
-			if(oParticle1.getEnergy() == 0) {
-				continue;
-			}
-			var oDirectionVector = particle_model_DirectionTool.getVector(oParticle1.getDirection());
-			var oTargetPosition = oParticle1.getPosition().clone().vector_add(oDirectionVector);
-			var oTarget = this._oModel.getParticleByPosition(oTargetPosition);
-			if(oTarget != null) {
-				this._oModel.addParticleEnergy(oTarget);
-			} else {
-				this._oModel.addParticle(new particle_model_Particle(oTargetPosition,oDirectionVector,"energy_echo"));
-			}
-			this._oModel.addParticleEnergy(oParticle1,-1);
-			oParticle1.setDirection(particle_model_DirectionTool.getReverse(oParticle1.getDirection()));
+			this._process(oParticle1);
 		}
+		var oParticle2 = this._oModel.getParticleByType("multiplexer_V").iterator();
+		while(oParticle2.hasNext()) {
+			var oParticle3 = oParticle2.next();
+			this._process(oParticle3);
+		}
+	}
+	,_process: function(oParticle) {
+		if(oParticle.getEnergy() == 0) {
+			return;
+		}
+		var oDirectionVector = particle_model_DirectionTool.getVector(oParticle.getDirection());
+		var oTargetPosition = oParticle.getPosition().clone().vector_add(oDirectionVector);
+		var oTarget = this._oModel.getParticleByPosition(oTargetPosition);
+		if(oTarget != null) {
+			this._oModel.addParticleEnergy(oTarget);
+		} else {
+			this._oModel.addParticle(new particle_model_Particle(oTargetPosition,oDirectionVector,"energy_echo"));
+		}
+		this._oModel.addParticleEnergy(oParticle,-1);
+		var oNextDirection = oParticle.getType() == "multiplexer" ? particle_model_DirectionTool.getReverse(oParticle.getDirection()) : particle_model_DirectionTool.getRotateClockwise(oParticle.getDirection());
+		oParticle.setDirection(oNextDirection);
 	}
 });
 var particle_controller_process_PusherBehavior = function(oModel,oView) {
@@ -2307,8 +2206,9 @@ var particle_controller_process_Spawn = function(oModel,oView) {
 	this._iMax = 200;
 	this._iStep = 1;
 	this._oModel.addParticle(new particle_model_Particle(new space_Vector2i(25,25),new space_Vector2i(),"generator"));
-	this._oModel.addParticle(new particle_model_Particle(new space_Vector2i(31,30),new space_Vector2i(),"wall_generator"));
 	this._oModel.addParticle(new particle_model_Particle(new space_Vector2i(30,30),new space_Vector2i(),"fabricator"));
+	this._oModel.addParticle(new particle_model_Particle(new space_Vector2i(31,30),new space_Vector2i(),"wall_generator"));
+	this._oModel.addParticle(new particle_model_Particle(new space_Vector2i(32,30),new space_Vector2i(),"wheel"));
 };
 particle_controller_process_Spawn.__name__ = true;
 particle_controller_process_Spawn.prototype = {
@@ -2562,6 +2462,30 @@ particle_model_DirectionTool.toRadian = function(oDirection) {
 particle_model_DirectionTool.getVector = function(oDirection) {
 	return particle_model_DirectionTool.vector.get(oDirection);
 };
+particle_model_DirectionTool.getRotateCounterClockwise = function(oDirection) {
+	switch(oDirection) {
+	case 0:
+		return 2;
+	case 1:
+		return 3;
+	case 2:
+		return 1;
+	case 3:
+		return 0;
+	}
+};
+particle_model_DirectionTool.getRotateClockwise = function(oDirection) {
+	switch(oDirection) {
+	case 0:
+		return 3;
+	case 1:
+		return 2;
+	case 2:
+		return 0;
+	case 3:
+		return 1;
+	}
+};
 var particle_model_Grid = function(iWidth,iHeight) {
 	this._iHeight = iHeight;
 	this._iWidth = iWidth;
@@ -2723,6 +2647,34 @@ particle_model_Model.prototype = {
 		oParticle.addEnergy(i);
 		this.onUpdate.trigger({ particle : oParticle, field : "energy"});
 	}
+	,processModifier: function(a) {
+		var aModifier = a.iterator();
+		while(aModifier.hasNext()) {
+			var aModifier1 = aModifier.next();
+			var _g = 0;
+			while(_g < aModifier1.length) {
+				var oModifier = aModifier1[_g];
+				++_g;
+				this._mParticleByPosition.remove(oModifier.particle.getPosition());
+			}
+		}
+		var aModifier2 = a.iterator();
+		while(aModifier2.hasNext()) {
+			var aModifier3 = aModifier2.next();
+			var _g1 = 0;
+			while(_g1 < aModifier3.length) {
+				var oModifier1 = aModifier3[_g1];
+				++_g1;
+				oModifier1.modifier(oModifier1.value);
+			}
+			this._mParticleByPosition.set(aModifier3[0].particle.getPosition(),aModifier3[0].particle);
+		}
+		var aModifier4 = a.iterator();
+		while(aModifier4.hasNext()) {
+			var aModifier5 = aModifier4.next();
+			this.onUpdate.trigger({ particle : aModifier5[0].particle, field : "position"});
+		}
+	}
 };
 var particle_model_Vector2iComp = function() {
 };
@@ -2776,25 +2728,28 @@ particle_model_Particle.prototype = {
 	,getDirection: function() {
 		return this._oDirection;
 	}
+	,isAbsorbable: function(oParticle) {
+		if(oParticle.getType() == "energy_echo") {
+			return true;
+		}
+		return false;
+	}
 	,setId: function(iId) {
 		this._iId = iId;
 	}
 	,setPosition: function(oPosition) {
 		this._oPosition = oPosition;
-		return this;
 	}
 	,setVelocity: function(oVector) {
 		this._oVelocity = oVector;
-		return this;
 	}
 	,setType: function(iType) {
 		this._iType = iType;
 	}
 	,addEnergy: function(i) {
-		this._iEnergy = 1;
-		if(i < 0) {
-			this._iEnergy = 0;
-		}
+		this._iEnergy += i;
+		this._iEnergy = haxe_IntTool.max(this._iEnergy,0);
+		this._iEnergy = haxe_IntTool.min(this._iEnergy,this.getType() == "storage" ? 9 : 1);
 	}
 	,setDirection: function(oDirection) {
 		this._oDirection = oDirection;
@@ -2869,6 +2824,7 @@ var particle_view_ParticleView = function(oParticle) {
 	this._oContainer = new PIXI.Container();
 	this._oContainer.interactive = true;
 	this._oContainer.interactiveChildren = true;
+	this._aAnimation = [];
 	this._oBody = new PIXI.Graphics();
 	this.updateBody();
 	this._oContainer.addChild(this._oBody);
@@ -2888,6 +2844,9 @@ particle_view_ParticleView.prototype = {
 	,getParticle: function() {
 		return this._oParticle;
 	}
+	,getAnimationAr: function() {
+		return this._aAnimation;
+	}
 	,getTypeColor: function(oType) {
 		if(particle_view_ParticleView.TYPE_COLOR.exists(oType)) {
 			return particle_view_ParticleView.TYPE_COLOR.get(oType);
@@ -2896,21 +2855,44 @@ particle_view_ParticleView.prototype = {
 		}
 	}
 	,updateBody: function() {
+		this._aAnimation = [];
 		this._oBody.clear();
+		this._oBody.removeChildren();
 		this._oBody.buttonMode = true;
 		this._oBody.interactive = true;
 		this._oBody.beginFill(this.getTypeColor(this._oParticle.getType()),1);
 		if(this._oParticle.getType() == "energy_echo") {
 			this._oBody.drawCircle(0,0,0.25);
 		} else {
-			this._oBody.lineStyle(0.2,this._oParticle.getEnergy() == 1 ? 16777215 : 5592405,1);
-			this._oBody.drawRect(-0.4,-0.4,0.8,0.8);
+			this._oBody.lineStyle(particle_view_ParticleView.BORDER_WIDTH,this._oParticle.getEnergy() == 1 ? 16777215 : 5592405,1);
+			this.drawSquare(this._oBody,1 - particle_view_ParticleView.BORDER_WIDTH);
 		}
 		this._oBody.endFill();
 		if(this._oParticle.getType() == "multiplexer") {
 			this._oBody.lineStyle(0.1,6710886,1).moveTo(0,0.25).lineTo(-0.5,0).lineTo(0,-0.25);
 		}
-		if(["pusher","fabricator","wall_generator","redirect","multiplexer"].indexOf(this._oParticle.getType()) != -1) {
+		if(this._oParticle.getType() == "multiplexer_V") {
+			this._oBody.lineStyle(0.1,6710886,1).moveTo(0.25,0).lineTo(0,-0.5).lineTo(-0.25,0);
+		}
+		if(this._oParticle.getType() == "wheel") {
+			var o = new PIXI.Graphics();
+			o.beginFill(16711680,1);
+			o.drawStar(0,0,8,0.5,0.4);
+			var oWheelContainer = new PIXI.Container();
+			oWheelContainer.addChild(o);
+			this._oBody.addChild(oWheelContainer);
+			oWheelContainer.updateTransform();
+			var oMatrix = oWheelContainer.localTransform.clone();
+			oWheelContainer.updateTransform();
+			var oMatrixB = oWheelContainer.localTransform.clone();
+			if(this._oParticle.getDirection() == 1 || this._oParticle.getDirection() == 0) {
+				oMatrix.rotate(Math.PI / 2);
+			} else {
+				oMatrix.rotate(-Math.PI / 2);
+			}
+			this._aAnimation.push({ animation : new particle_view_pixi_Animation(oWheelContainer,oMatrix,oMatrixB), cadence : "loop"});
+		}
+		if(["pusher","fabricator","wall_generator","redirect","multiplexer","multiplexer_V"].indexOf(this._oParticle.getType()) != -1) {
 			var tmp = this._oParticle.getDirection();
 			this._oContainer.rotation = this.getDirectionRadian(tmp);
 			this._oBody.lineStyle(0.1,16711680,1).moveTo(0,0.25).lineTo(0.5,0).lineTo(0,-0.25);
@@ -2933,6 +2915,35 @@ particle_view_ParticleView.prototype = {
 			return 0;
 		}
 	}
+	,drawSquare: function(o,fSize) {
+		o.drawRect(-fSize / 2,-fSize / 2,fSize,fSize);
+	}
+};
+var particle_view_SelectionView = function() {
+	this._oContainer = new PIXI.Graphics();
+	this._oPosition = null;
+};
+particle_view_SelectionView.__name__ = true;
+particle_view_SelectionView.prototype = {
+	getContainer: function() {
+		return this._oContainer;
+	}
+	,setPosition: function(oVector) {
+		this._oPosition = oVector;
+		this.update();
+	}
+	,update: function() {
+		this._oContainer.clear();
+		if(this._oPosition == null) {
+			return;
+		}
+		this._oContainer.lineStyle(0.1,16711680,1);
+		this.drawSquare(this._oContainer,1.5);
+		this._oContainer.position.set(this._oPosition.x + 0.5,this._oPosition.y + 0.5);
+	}
+	,drawSquare: function(o,fSize) {
+		o.drawRect(-fSize / 2,-fSize / 2,fSize,fSize);
+	}
 };
 var particle_view_View = function(oModel) {
 	this._oDragged = null;
@@ -2942,14 +2953,32 @@ var particle_view_View = function(oModel) {
 	window.addEventListener("resize",function() {
 		_gthis._oPixi.renderer.resize(oCanvas.clientWidth,oCanvas.clientHeight);
 	});
+	this._oPixi.ticker.add($bind(this,this.animate));
 	this._oModel = oModel;
 	this._oStage = this._oPixi.stage;
 	this._oStage.scale.x = 10;
 	this._oStage.scale.y = 10;
 	this._oMenu = new particle_view_Menu(this._oModel,window.document.getElementById("menu"));
+	this._oSelectionView = new particle_view_SelectionView();
+	this._oStage.addChild(this._oSelectionView.getContainer());
 	var oGridView = new particle_view_GridView(200,100);
 	this._oStage.addChild(oGridView.getContainer());
 	this._mParticleView = new haxe_ds_IntMap();
+	this._mAnimation = new haxe_ds_IntMap();
+	var _g = new haxe_ds_StringMap();
+	var value = new particle_view_pixi_Cadence(1000,new Date().getTime(),true);
+	if(__map_reserved["loop"] != null) {
+		_g.setReserved("loop",value);
+	} else {
+		_g.h["loop"] = value;
+	}
+	var value1 = new particle_view_pixi_Cadence(1000,new Date().getTime());
+	if(__map_reserved["move"] != null) {
+		_g.setReserved("move",value1);
+	} else {
+		_g.h["move"] = value1;
+	}
+	this._mCadence = _g;
 	this.onParticleDragTo = new trigger_EventListener();
 	this._oMenu.update();
 	this._oPixi.start();
@@ -2973,6 +3002,9 @@ particle_view_View.prototype = {
 	,getMenu: function() {
 		return this._oMenu;
 	}
+	,getSelectionView: function() {
+		return this._oSelectionView;
+	}
 	,setZoom: function(x,y,f) {
 		this._oStage.setTransform(x,y,f,f);
 	}
@@ -2982,10 +3014,11 @@ particle_view_View.prototype = {
 		if(_this.h.hasOwnProperty(key)) {
 			throw new js__$Boot_HaxeError("!!!");
 		}
+		var oParticleView = this._createParticleView(oParticle);
 		var _this1 = this._mParticleView;
 		var key1 = oParticle.getId();
-		var value = this._createParticleView(oParticle);
-		_this1.h[key1] = value;
+		_this1.h[key1] = oParticleView;
+		this._updateParticleView(oParticleView);
 	}
 	,updateParticle: function(oParticle) {
 		var _this = this._mParticleView;
@@ -2995,7 +3028,8 @@ particle_view_View.prototype = {
 		}
 		var _this1 = this._mParticleView;
 		var key1 = oParticle.getId();
-		_this1.h[key1].update();
+		var oParticleView = _this1.h[key1];
+		this._updateParticleView(oParticleView);
 	}
 	,removeParticle: function(oParticle) {
 		if(this._oModel.getCount() + 1 != Lambda.count(this._mParticleView)) {
@@ -3004,15 +3038,16 @@ particle_view_View.prototype = {
 		var _this = this._mParticleView;
 		var key = oParticle.getId();
 		if(!_this.h.hasOwnProperty(key)) {
-			console.log("src/particle/view/View.hx:132:","WARING trying to remove #" + oParticle.getId());
+			console.log("src/particle/view/View.hx:152:","WARING trying to remove #" + oParticle.getId());
 			return;
 		}
-		console.log("src/particle/view/View.hx:135:","removing #" + oParticle.getId());
+		console.log("src/particle/view/View.hx:155:","removing #" + oParticle.getId());
 		var tmp = this._oStage;
 		var _this1 = this._mParticleView;
 		var key1 = oParticle.getId();
 		tmp.removeChild(_this1.h[key1].getContainer());
 		this._mParticleView.remove(oParticle.getId());
+		this._mAnimation.remove(oParticle.getId());
 		if(this._oModel.getCount() != Lambda.count(this._mParticleView)) {
 			throw new js__$Boot_HaxeError("!!");
 		}
@@ -3020,19 +3055,97 @@ particle_view_View.prototype = {
 	,updateSelection: function() {
 		this._oMenu.update();
 	}
+	,animate: function() {
+		var aAnimation = this._mAnimation.iterator();
+		while(aAnimation.hasNext()) {
+			var aAnimation1 = aAnimation.next();
+			var _g = 0;
+			while(_g < aAnimation1.length) {
+				var oAnimationInfo = aAnimation1[_g];
+				++_g;
+				var _this = this._mCadence;
+				var key = oAnimationInfo.cadence;
+				var oCadence = __map_reserved[key] != null ? _this.getReserved(key) : _this.h[key];
+				oAnimationInfo.animation.animate(oCadence.getFrame());
+			}
+		}
+	}
 	,update: function() {
 	}
+	,_updateParticleView: function(oParticleView) {
+		oParticleView.update();
+		var _this = this._mAnimation;
+		var key = oParticleView.getParticle().getId();
+		var value = oParticleView.getAnimationAr();
+		_this.h[key] = value;
+	}
 	,_createParticleView: function(oParticle) {
-		var _gthis = this;
 		var oView = new particle_view_ParticleView(oParticle);
 		this._oStage.addChild(oView.getContainer());
-		oView.getContainer().on("pointerdown",function() {
-			_gthis._oDragged = oView;
-			console.log("src/particle/view/View.hx:166:",_gthis._oDragged);
-		});
-		oView.update();
 		return oView;
 	}
+};
+var particle_view_pixi_Animation = function(o,oBegin,oEnd) {
+	this._oContainer = o;
+	this._oBegin = oBegin;
+	this._oEnd = oEnd.clone();
+};
+particle_view_pixi_Animation.__name__ = true;
+particle_view_pixi_Animation.prototype = {
+	animate: function(f) {
+		var o = particle_view_pixi_MatrixTool.interpolate(this._oBegin,this._oEnd,f);
+		this._oContainer.transform.setFromMatrix(o);
+		this._oContainer.updateTransform();
+	}
+};
+var particle_view_pixi_Cadence = function(fDuration,fStart,bRepeat) {
+	if(bRepeat == null) {
+		bRepeat = true;
+	}
+	this._fStart = fStart == null ? new Date().getTime() : fStart;
+	this._fDuration = fDuration;
+	this._bRepeat = true;
+};
+particle_view_pixi_Cadence.__name__ = true;
+particle_view_pixi_Cadence.prototype = {
+	getFrame: function() {
+		var fFrame = (new Date().getTime() - this._fStart) / this._fDuration;
+		if(this._bRepeat) {
+			fFrame %= 1;
+		} else {
+			fFrame = Math.min(fFrame,1);
+		}
+		return fFrame;
+	}
+	,reset: function() {
+		this._fStart = new Date().getTime();
+	}
+};
+var particle_view_pixi_FloatTool = function() { };
+particle_view_pixi_FloatTool.__name__ = true;
+particle_view_pixi_FloatTool.interpolate = function(a,b,f) {
+	return a + f * (b - a);
+};
+particle_view_pixi_FloatTool.interpolateAngle = function(a,b,f) {
+	return a + particle_view_pixi_FloatTool.shortAngleDist(a,b) * f;
+};
+particle_view_pixi_FloatTool.shortAngleDist = function(a0,a1) {
+	var max = Math.PI * 2;
+	var da = (a1 - a0) % max;
+	return 2 * (da % max) - da;
+};
+var particle_view_pixi_MatrixTool = function() { };
+particle_view_pixi_MatrixTool.__name__ = true;
+particle_view_pixi_MatrixTool.interpolate = function(a,b,f) {
+	var o = a.clone();
+	var oTransformA = new PIXI.Transform();
+	oTransformA.setFromMatrix(a);
+	var oTransformB = new PIXI.Transform();
+	oTransformB.setFromMatrix(b);
+	oTransformA.rotation = particle_view_pixi_FloatTool.interpolateAngle(oTransformA.rotation,oTransformB.rotation,f);
+	oTransformA.position.set(particle_view_pixi_FloatTool.interpolate(oTransformA.position.x,oTransformB.position.x,f),particle_view_pixi_FloatTool.interpolate(oTransformA.position.y,oTransformB.position.y,f));
+	oTransformA.updateLocalTransform();
+	return oTransformA.localTransform;
 };
 var sweet_functor_comparator_ReflectComparator = function() {
 };
@@ -3069,6 +3182,7 @@ $global.$haxeUID |= 0;
 if( String.fromCodePoint == null ) String.fromCodePoint = function(c) { return c < 0x10000 ? String.fromCharCode(c) : String.fromCharCode((c>>10)+0xD7C0)+String.fromCharCode((c&0x3FF)+0xDC00); }
 String.__name__ = true;
 Array.__name__ = true;
+Date.__name__ = "Date";
 haxe_Resource.content = [{ name : "menu", data : "PGRpdj4NCgk8YnV0dG9uIGRhdGEtYWN0aW9uPSJzdGVwIj4NCgkJJmN1cmFycjsNCgk8L2J1dHRvbj4NCgk8YnV0dG9uIGRhdGEtYWN0aW9uPSJ0b2dnbGVfcGxheSI+DQoJCTo6aWYgKHNwZWVkID09IDApOjogDQoJCQkmcnRyaWY7IA0KCQk6OmVsc2U6OiANCgkJCSZzcXVhcmY7IA0KCQk6OmVuZDo6DQoJPC9idXR0b24+DQoJPGJ1dHRvbiBkYXRhLWFjdGlvbj0ic3BlZWQgdXAiPg0KCQkmcnRyaWY7JnJ0cmlmOw0KCTwvYnV0dG9uPg0KPC9kaXY+DQoNCjxkaXY+DQoJOjppZiAoc2VsZWN0ZWQgIT0gbnVsbCApOjoNCgkJOjpzZWxlY3RlZDo6DQoJOjplbmQ6Og0KPC9kaXY+DQo8ZGl2Pg0KCTo6cG9zaXRpb24ueDo6Ozo6cG9zaXRpb24ueTo6DQo8L2Rpdj4NCg"},{ name : "grid_shader", data : "cHJlY2lzaW9uIG1lZGl1bXAgZmxvYXQ7DQoNCnVuaWZvcm0gZmxvYXQgdnB3OyAvLyBXaWR0aCwgaW4gcGl4ZWxzDQp1bmlmb3JtIGZsb2F0IHZwaDsgLy8gSGVpZ2h0LCBpbiBwaXhlbHMNCg0KdW5pZm9ybSB2ZWMyIG9mZnNldDsgLy8gZS5nLiBbLTAuMDIzNTAwMDAwMDAwMDAwNDM0IDAuOTc5NDAwMDAwMDAwMDAxN10sIGN1cnJlbnRseSB0aGUgc2FtZSBhcyB0aGUgeC95IG9mZnNldCBpbiB0aGUgbXZNYXRyaXgNCnVuaWZvcm0gdmVjMiBwaXRjaDsgIC8vIGUuZy4gWzUwIDUwXQ0KDQp2b2lkIG1haW4oKSB7DQogIGZsb2F0IGxYID0gZ2xfRnJhZ0Nvb3JkLnggLyB2cHc7DQogIGZsb2F0IGxZID0gZ2xfRnJhZ0Nvb3JkLnkgLyB2cGg7DQoNCiAgZmxvYXQgc2NhbGVGYWN0b3IgPSAxMDAwMC4wOw0KDQogIGZsb2F0IG9mZlggPSAoc2NhbGVGYWN0b3IgKiBvZmZzZXRbMF0pICsgZ2xfRnJhZ0Nvb3JkLng7DQogIGZsb2F0IG9mZlkgPSAoc2NhbGVGYWN0b3IgKiBvZmZzZXRbMV0pICsgKDEuMCAtIGdsX0ZyYWdDb29yZC55KTsNCg0KICBpZiAoaW50KG1vZChvZmZYLCBwaXRjaFswXSkpID09IDAgfHwNCiAgICAgIGludChtb2Qob2ZmWSwgcGl0Y2hbMV0pKSA9PSAwKSB7DQogICAgZ2xfRnJhZ0NvbG9yID0gdmVjNCgwLjAsIDAuMCwgMC4wLCAwLjUpOw0KICB9IGVsc2Ugew0KICAgIGdsX0ZyYWdDb2xvciA9IHZlYzQoMS4wLCAxLjAsIDEuMCwgMS4wKTsNCiAgfQ0KfQ"}];
 var __map_reserved = {};
 Object.defineProperty(js__$Boot_HaxeError.prototype,"message",{ get : function() {
@@ -3095,6 +3209,7 @@ particle_model_DirectionTool.vector = (function($this) {
 	$r = _g;
 	return $r;
 }(this));
+particle_view_ParticleView.BORDER_WIDTH = 0.2;
 particle_view_ParticleView.TYPE_COLOR = (function($this) {
 	var $r;
 	var _g = new haxe_ds_StringMap();

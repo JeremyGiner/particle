@@ -13,37 +13,46 @@ class MultiplexerBehavior extends AController implements IProcedure {
 
 	public function process() {
 		
-		var a = _oModel.getParticleByType( ParticleType.multiplexer );
-		for ( oParticle in a ) {
-			
-			if ( oParticle.getEnergy() == 0 )// TODO: use indexer
-				continue;
-			
-			var oDirectionVector = DirectionTool.getVector( oParticle.getDirection() );
-			var oTargetPosition = oParticle.getPosition()
-				.clone().vector_add( 
-					oDirectionVector
-				)
-			;
-			
-			var oTarget = _oModel.getParticleByPosition( oTargetPosition );
-			if ( oTarget != null ) {
-				_oModel.addParticleEnergy( oTarget );
-			} else {
-				// Create particle
-				_oModel.addParticle( new Particle( 
-					oTargetPosition, 
-					oDirectionVector, 
-					ParticleType.energy_echo
-				) );
-			}
-			
-			// Discharge
-			_oModel.addParticleEnergy( oParticle, -1 );
-			
-			// Change orientation
-			oParticle.setDirection( DirectionTool.getReverse( oParticle.getDirection() ) );
+		for ( oParticle in _oModel.getParticleByType( ParticleType.multiplexer ) ) 
+			_process( oParticle );
+		
+		for ( oParticle in _oModel.getParticleByType( ParticleType.multiplexer_V ) ) 
+			_process( oParticle );
+	}
+	
+	public function _process( oParticle :Particle ) {
+		
+		if ( oParticle.getEnergy() == 0 )// TODO: use indexer
+			return;
+		
+		var oDirectionVector = DirectionTool.getVector( oParticle.getDirection() );
+		var oTargetPosition = oParticle.getPosition()
+			.clone().vector_add( 
+				oDirectionVector
+			)
+		;
+		
+		var oTarget = _oModel.getParticleByPosition( oTargetPosition );
+		if ( oTarget != null ) {
+			_oModel.addParticleEnergy( oTarget );
+		} else {
+			// Create particle
+			_oModel.addParticle( new Particle( 
+				oTargetPosition, 
+				oDirectionVector, 
+				ParticleType.energy_echo
+			) );
 		}
+		
+		// Discharge
+		_oModel.addParticleEnergy( oParticle, -1 );
+		
+		// Change orientation
+		var oNextDirection = oParticle.getType() == ParticleType.multiplexer ?
+			DirectionTool.getReverse( oParticle.getDirection() ) :
+			DirectionTool.getRotateClockwise( oParticle.getDirection() )
+		;
+		oParticle.setDirection( oNextDirection );
 	}
 	
 }
