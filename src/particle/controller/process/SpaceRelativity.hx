@@ -1,10 +1,10 @@
 package particle.controller.process;
 import sweet.functor.IProcedure;
 import particle.model.Model;
-import particle.model.Particle;
+import particle.entity.Particle;
 import particle.view.View;
 import space.Vector2i;
-import particle.model.Direction;
+import particle.tool.Direction;
 import sweet.functor.IProcedure;
 import haxe.IntTool;
 

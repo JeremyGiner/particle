@@ -1,4 +1,15 @@
 
+!!!!!! use GameState.setComponent
+
+
+key design :
+	- at your own pace
+	puzzling effeciecy
+
+	
+
+stick -> frame -> plate
+
 make block creation harder and cosume more energy
 
 center of it all
@@ -32,6 +43,21 @@ scenario
 		- create compass, travel toward goal
 	
 ________________________
+
+MATTER
+crystal
+crystal battery
+wood?
+coal
+coal furnace
+
+extractor
+crane
+merger
+
+AUTOMATION
+link
+
 
 COMPONENT
 matter

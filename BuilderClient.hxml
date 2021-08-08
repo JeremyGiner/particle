@@ -1,41 +1,24 @@
 
 #_______________________________________________________________________________
-# Client compilation
-
-# Libraries
--lib pixijs
--lib sweet.functor
-
-
-# Select directory
--cp src
--cp vendor
-
-# Resource
---resource src/particle/shader/grid_shader@grid_shader
---resource src/particle/template/menu.template.html@menu
-
-# JavaScript target
--js build/client/game.js
-
--main particle.Main
-
-#_______________________________________________________________________________
 # Test
 --next
+#
+--macro domkit.Macros.checkCSS('src/particle/res/style.css')
 
-# Libraries
--lib pixijs
-
-
-# Select directory
 -cp src
 -cp vendor
+-lib sweet.functor
+-lib heaps
+#-lib hlsdl
+-lib hldx
+#-lib hlopenal
+-lib domkit
 
-# Resource
---resource src/particle/shader/grid_shader@grid_shader
+-main particle.Main
+-D windowSize=1366x768
+-D resourcesPath=src/particle/res
+#-debug
 
-# JavaScript target
--js build/client/test.js
+-hl bin/hl/particle.hl
 
--main particle.Test
+#--next

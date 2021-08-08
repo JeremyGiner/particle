@@ -1,7 +1,7 @@
 package particle.controller.tool;
 import particle.model.Model;
-import particle.model.Particle;
-import particle.model.ParticleType;
+import particle.entity.Particle;
+import particle.entity.ParticleType;
 
 
 /**

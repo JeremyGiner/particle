@@ -10,8 +10,9 @@
     <movie height="600" />
     <movie version="0" />
     <movie minorVersion="0" />
-    <movie platform="JavaScript" />
+    <movie platform="HashLink" />
     <movie background="#FFFFFF" />
+    <movie preferredSDK="Haxe 4.1.0;4.1.0;" />
   </output>
   <!-- Other classes to be compiled into your SWF -->
   <classpaths>
@@ -29,8 +30,10 @@
   </build>
   <!-- haxelib libraries -->
   <haxelib>
-    <library name="pixijs" />
     <library name="sweet.functor" />
+    <library name="heaps" />
+    <library name="hldx" />
+    <library name="domkit" />
   </haxelib>
   <!-- Class files to compile (other referenced classes will automatically be included) -->
   <compileTargets>
@@ -47,8 +50,8 @@
   <!-- Other project options -->
   <options>
     <option showHiddenPaths="True" />
-    <option testMovie="Unknown" />
-    <option testMovieCommand="" />
+    <option testMovie="Custom" />
+    <option testMovieCommand="hl bin/hl/particle.hl -debug" />
   </options>
   <!-- Plugin storage -->
   <storage />

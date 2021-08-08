@@ -1,7 +1,6 @@
 package particle.controller;
-import js.Browser;
-import particle.view.View;
-import pixi.core.math.Point;
+import h2d.col.Point;
+import particle.view.HeapsApp;
 
 /**
  * ...
@@ -9,38 +8,59 @@ import pixi.core.math.Point;
  */
 class Zoom {
 
-	var _oView :View;
+	var _oView :HeapsApp;
 	
-	public function new( oView :View ) {
-		
+	public function new( oView :HeapsApp ) {
 		_oView = oView;
-		Browser.window.addEventListener('wheel', function( event ) {
+		hxd.Window.getInstance().addEventTarget(function( event :hxd.Event ) {
 			
-			var fFactor = _oView.getZoom()
-				* (event.deltaY > 0 ? 0.75 : 1.25)
-			;
+			if( event.wheelDelta == 0 )
+				return;
 			
-			fFactor = Math.min(fFactor, 100);
-			fFactor = Math.max(fFactor, 0.01);
+			// Get new zoom factor
+			var fFactor = ( event.wheelDelta > 0 ) ? 0.75 : 1.25;
 			
-			var x = event.pageX;
-			var y = event.pageY;
+			var oNewScale = {
+				x: _clamp( fFactor * _oView.s2d.camera.scaleX, 1, 100 ),
+				y: _clamp( fFactor * _oView.s2d.camera.scaleY, -100, -1 ),
+			};
+			_oView.s2d.camera.setScale( 
+				oNewScale.x, 
+				oNewScale.y
+			);
+			
+			// Get cursor position
+			
 			//var o = _oView.getScene().toLocal(new Point(x, y));
 			//trace(o);
-			var oScene = _oView.getScene();
+			
+			// Get focus point (mouse rel to scene)
+			var oFocusPoint = {
+				x: _oView.s2d.mouseX,
+				y: _oView.s2d.mouseY,
+			};
+			
+			// get focus point rel to camera
+			var oFocusPointToCamera = {
+				x: (oFocusPoint.x - _oView.s2d.camera.x) ,
+				y: (oFocusPoint.y - _oView.s2d.camera.y),
+			}
 			
 			
-			var worldPos = {x: (x - oScene.x) / oScene.scale.x, y: (y - oScene.y)/oScene.scale.y};
-			var newScale = fFactor;//{x: oScene.scale.x * s, y: oScene.scale.y * s};
-
-			var newScreenPos = {x: (worldPos.x ) * fFactor + oScene.x, y: (worldPos.y) * fFactor + oScene.y};
-
-			oScene.x -= (newScreenPos.x-x) ;
-			oScene.y -= (newScreenPos.y-y) ;
-			oScene.scale.x = fFactor;
-			oScene.scale.y = fFactor;
-			//_oView.setZoom( o.x , o.y, fFactor );
+			//TODO : simplify
+			var offset = {
+				x: oFocusPointToCamera.x / fFactor, 
+				y: oFocusPointToCamera.y / fFactor
+			};
+			
+			
+			_oView.s2d.camera.x = oFocusPoint.x - offset.x;
+			_oView.s2d.camera.y = oFocusPoint.y - offset.y;
+			
 		});
 	}
-	
+
+	function _clamp( f :Float, min :Float, max :Float ) {
+		return Math.max(Math.min(f, max),min);
+	}
 }

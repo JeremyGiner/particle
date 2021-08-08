@@ -1,6 +1,6 @@
 package particle.view.pixi;
-import pixi.core.display.Container;
-import pixi.core.math.Matrix;
+import h2d.Object;
+import h2d.col.Matrix;
 
 /**
  * ...
@@ -10,9 +10,9 @@ class Animation {
 
 	var _oBegin :Matrix;
 	var _oEnd :Matrix;
-	var _oContainer :Container;
+	var _oContainer :Object;
 	
-	public function new( o :Container, oBegin :Matrix, oEnd :Matrix ) {
+	public function new( o :Object, oBegin :Matrix, oEnd :Matrix ) {
 		_oContainer = o;
 		_oBegin = oBegin;
 		_oEnd = oEnd.clone();
@@ -24,7 +24,13 @@ class Animation {
 			_oEnd,
 			f
 		);
-		untyped _oContainer.transform.setFromMatrix(o);
+		
+		// TODO : improve
+		_oContainer.setPosition( o.getPosition().x, o.getPosition().y );
+		_oContainer.scaleX = o.getScale().x; 
+		_oContainer.scaleY = o.getScale().y; 
+		//_oContainer.setRotation( o.get() );
+		//transform.setFromMatrix(o);
 		
 		/*setTransform(
 			o.tx, o.ty,
@@ -33,7 +39,7 @@ class Animation {
 			o.c, o.b
 			
 		);*/
-		_oContainer.updateTransform();
+		//_oContainer.updateTransform();
 	}
 	
 }

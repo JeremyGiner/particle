@@ -1,29 +1,28 @@
 package particle.view;
+import h2d.Graphics;
+import h2d.Object;
 import haxe.Resource;
-import js.Browser;
-import pixi.AbstractFilter;
-import pixi.core.display.Container;
-import pixi.core.graphics.Graphics;
-import pixi.core.renderers.webgl.filters.Filter;
-import pixi.core.utils.Utils;
 /**
  * ...
  * @author 
  */
 class GridView {
 	
-	var _oContainer :Container;
+	var _oContainer :Object;
 	
 	public function new( iWidth :Int, iHeight :Int ) {
 		// draw body
-		_oContainer = new Container();
+		_oContainer = new Object();
 		
-		var o = new Graphics().lineStyle(0.1, 0x333333/*Utils.rgb2hex([200,200,200,200])*/, 1);
+		var o = new Graphics();
+		o.lineStyle(0.1, 0x333333/*Utils.rgb2hex([200,200,200,200])*/, 1);
 		for (  j in 0...iWidth ) {
-			o.moveTo(j,0).lineTo(j,iHeight);
+			o.moveTo(j, 0);
+			o.lineTo(j,iHeight);
 		}
 		for (i in 0...iHeight ) {
-			o.moveTo(0,i).lineTo(iWidth,i);
+			o.moveTo(0, i);
+			o.lineTo(iWidth,i);
 		}
 		_oContainer.addChild(o);
 		//var width = Browser.window.innerWidth;

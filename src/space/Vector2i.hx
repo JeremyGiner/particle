@@ -38,14 +38,9 @@ class Vector2i {
 	public function distanceSqed_get( oVector :Vector2i ) {
 		return distanceSqed( this, oVector );
 	}
-
-	public function getTaxicabLength() {
-		return Math.abs(this.x) + Math.abs(this.y);
-	}
 	
 	public function toString() {
-		
-		return x+':'+y;
+		return x + ':' + y;
 	}
 	
 //_____________________________________________________________________________
@@ -59,10 +54,7 @@ class Vector2i {
 	}
 	
 	public function add( x_:Int, y_:Int = 0 ){
-		x += x_;
-		y += y_;
-		
-		return this;
+		return set( x + x_, y + y_ );
 	}
 	
 	public function vector_add( oVector :Vector2i ) {
@@ -70,10 +62,10 @@ class Vector2i {
 	}
 	
 	public function mult( fMultiplicator :Float ) {
-		x = Math.round( x * fMultiplicator );
-		y = Math.round( y * fMultiplicator );
-		
-		return this;
+		return set(
+			Math.round( x * fMultiplicator ),
+			Math.round( y * fMultiplicator )
+		);
 	}
 	
 	public function divide( fDivisor :Float ) {
@@ -92,7 +84,7 @@ class Vector2i {
 		if( fLength < 0 ) throw('Invalid length : '+ fLength);
 		var length = length_get();
 		if( length == 0 )
-			x = Math.round( fLength );
+			set( Math.round( fLength ), 0 );
 		else
 			mult( fLength / length );
 			
@@ -111,21 +103,22 @@ class Vector2i {
 		return oVector.x == x && oVector.y == y;
 	}
 	
-	static public function compare( a :Vector2i, oVector :Vector2i ) {
-		trace('ok');
-		if ( a.equal(oVector) ) return 0;
-		return a.toString() > oVector.toString() ? 1 : -1;
-		//return a.x > b.x && a.y > b.y ? 1 : -1;
-	}
-	
 //_____________________________________________________________________________
 //
 	//Result range :  [-Math.PI / 2, Math.PI / 2] 
-	public function angleAxisXY(){
+	public function angleAxisXY() :Null<Float> {
 		if( x == 0 && y == 0 )
 			return null;
 		return Math.atan2( y, x );
 	}
+	
+//_____________________________________________________________________________
+//	Shorthand
+
+	public function addVector( o :Vector2i ) {
+		return add( o.x, o.y );
+	}
+	
 //_____________________________________________________________________________
 //	Static
 

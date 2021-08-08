@@ -1,7 +1,7 @@
 package particle.controller.process;
-import particle.model.Particle;
+import particle.entity.Particle;
 import space.Vector2i;
-import particle.model.ParticleType;
+import particle.entity.ParticleType;
 
 /**
  * ...

@@ -1,11 +1,7 @@
 package particle.controller;
-import js.Browser;
-import js.html.DirectionSetting;
-import js.html.KeyboardEvent;
-import js.html.MouseEvent;
-import particle.model.Direction;
+import particle.tool.Direction;
 import particle.model.Model;
-import particle.model.Particle;
+import particle.entity.Particle;
 import particle.view.ParticleView;
 import particle.view.View;
 
@@ -21,7 +17,8 @@ class Rotate extends AController {
 	
 	public function new( oModel :Model, oView :View ) {
 		super(oModel, oView);
-		
+		//TODO
+		/*
 		Browser.window.addEventListener('mousemove', function( event :MouseEvent ) {
 			mouse_x = event.clientX;
 			mouse_y = event.clientY;
@@ -39,7 +36,7 @@ class Rotate extends AController {
 			
 			oParticle.setDirection( getNextDirection( oParticle.getDirection() ) );
 			_oView.updateParticle( oParticle );
-		});
+		});*/
 
 	}
 	

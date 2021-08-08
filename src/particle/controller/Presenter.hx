@@ -1,9 +1,7 @@
 package particle.controller;
 import particle.model.Model;
 import particle.model.Model.ParticleUpdateEvent;
-import particle.model.Particle;
-import js.html.MouseEvent;
-import js.html.Element;
+import particle.entity.Particle;
 
 /**
  * ...
@@ -38,9 +36,10 @@ class Presenter extends AController {
 		});
 		
 		// Model to menu
+		/*
 		_oModel.onSpeedChange.add(function( oModel :Model ) {
 			_oView.getMenu().update();
-		});
+		});*/
 		
 		// Model to selection view
 		_oModel.onSelectionChange.add( function( oParticle :Particle ) {
@@ -48,7 +47,9 @@ class Presenter extends AController {
 		});
 		
 		// Menu input
-		_oView.getMenu().getContainer().addEventListener('click', function( oEvent :MouseEvent ) {
+		/*
+		_oView.getMenu().getContainer()
+			.addEventListener('click', function( oEvent :MouseEvent ) {
 			if ( !Std.is( oEvent.originalTarget, Element ) )
 				return;
 			
@@ -65,14 +66,17 @@ class Presenter extends AController {
 					_oController.processGameStep();
 			}
 				
-		});
+		});*/
 		
 		
 	}
 	
 	function _updateSelectionView() {
-		var oPos = _oModel.getSelection() == null ? null : _oModel.getSelection().getPosition();
-		_oView.getSelectionView().setPosition( oPos );
+		/*
+		var oPos = _oModel.getSelection() == null ? 
+			null : 
+			_oModel.getSelection().getPosition();
+		_oView.getSelectionView().setPosition( oPos );*/
 	}
 	
 }

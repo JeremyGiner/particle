@@ -1,6 +1,5 @@
 package particle.view.pixi;
-import pixi.core.display.Transform;
-import pixi.core.math.Matrix;
+import h2d.col.Matrix;
 
 /**
  * ...
@@ -8,26 +7,20 @@ import pixi.core.math.Matrix;
  */
 class MatrixTool {
 
-	static public function interpolate( a :Matrix, b :Matrix, f :Float ) {
+	static public function interpolate( a :Matrix, b :Matrix, f :Float ) :Matrix {
 		var o = a.clone();
-		var oTransformA = new Transform();oTransformA.setFromMatrix( a );
-		var oTransformB = new Transform();oTransformB.setFromMatrix( b );
-		oTransformA.rotation = FloatTool.interpolateAngle(
+		
+		o.a = FloatTool.interpolate( a.a, b.a, f );
+		o.b = FloatTool.interpolate( a.b, b.b, f );
+		o.c = FloatTool.interpolate( a.c, b.c, f );
+		o.d = FloatTool.interpolate( a.d, b.d, f );
+		o.x = FloatTool.interpolate( a.x, b.x, f );
+		o.y = FloatTool.interpolate( a.y, b.y, f );
+
+		/*o.setrotation = FloatTool.interpolateAngle(
 			oTransformA.rotation, oTransformB.rotation, f 
-		);
-		oTransformA.position.set(
-			FloatTool.interpolate( 
-				oTransformA.position.x, 
-				oTransformB.position.x, 
-				f 
-			),
-			FloatTool.interpolate( 
-				oTransformA.position.y, 
-				oTransformB.position.y, 
-				f 
-			)
-		);
-		oTransformA.updateLocalTransform();
-		return oTransformA.localTransform;
+		);*/
+		
+		return o;
 	}
 }

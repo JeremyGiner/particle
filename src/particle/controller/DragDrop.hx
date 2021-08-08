@@ -1,60 +1,94 @@
 package particle.controller;
-import js.html.MouseEvent;
-import particle.controller.process.Move;
-import particle.model.Model;
-import particle.model.Particle;
-import particle.view.ParticleView;
-import particle.view.View;
+import legion.entity.IEntity;
+import particle.ParticleGameState;
+import particle.component.ManualCrane;
+import particle.entity.atom.MasterCrane;
+import particle.view.HeapsApp;
 import space.Vector2i;
+import hxd.Event.EventKind;
+import particle.component.Position;
 
 /**
  * ...
  * @author 
  */
-class DragDrop extends AController  {
+class DragDrop {
 
-	var _oMove :Move;
-	var _oDragged :ParticleView;
+	var _oGameState :ParticleGameState;
+	var _oView :HeapsApp;
+	
+	var _oMasterCrane :MasterCrane; // TODO : make dynamic
 	
 	
-	public function new( oModel :Model, oView :View, oMove :Move ) {
-		_oMove = oMove;
+	public function new( oModel :ParticleGameState, oView :HeapsApp ) {
+		_oGameState = oModel;
+		_oView = oView;
 		
-		super(oModel, oView);
 		
-		oModel.onDelete.add(function( oParticle :Particle ) {
-			if ( _oDragged!= null && _oDragged.getParticle() ==  oParticle )
-				_oDragged = null;
+		hxd.Window.getInstance().addEventTarget(function( event :hxd.Event ) {
+			
+			// On push right click
+			if ( event.kind == EventKind.EPush && event.button == 0 )
+				return dragStart();
+			
+				
+			// On realease right click
+			if ( event.kind == EventKind.ERelease && event.button == 0 )
+				return drop();
 		});
-		var oCanvas = _oView.getCanvas();
-		oCanvas.addEventListener('click', function( oEvent :MouseEvent ) {
-			
-			// Case: left click -> clear selection
-			if ( oEvent.button == 2 ) {
-				_oModel.setSelection( null );
-				return;
-			}
-			
-			var oPosition = _oView.toGridPosition( oEvent.pageX, oEvent.pageY);
-			var oTargetParticle = _oModel.getParticleByPosition( oPosition );
-			
-			// Case: move particle
-			if ( _oModel.getSelection() != null && oTargetParticle == null ) {
-				_oModel.setParticlePosition( _oModel.getSelection(), oPosition );
-				return;
-			}
-			
-			_oModel.setSelection( oTargetParticle );
-		});
-		oCanvas.addEventListener('mousemove', function( oEvent :MouseEvent ) {
-			
-			var oPosition = _oView.toGridPosition( oEvent.clientX, oEvent.clientY);
-			_oView.getMenu().setPosition( oPosition );
-			_oView.getMenu().update();
-		});
+	}
+	
+	public function getMasterCrane() {
+		if ( _oMasterCrane == null )
+			for ( o in _oGameState.getEntityAll() )
+				if ( Std.is( o, MasterCrane ) ) {
+					_oMasterCrane = cast o;
+					break;
+				}
+		return _oMasterCrane;
+	}
+	
+	public function dragStart() {
+		var x = Math.floor( _oView.s2d.mouseX );
+		var y = Math.floor( _oView.s2d.mouseY );
+		var o = _oGameState.getPositionIndexer()
+			.getEntityByPosition( new Vector2i(x, y) );
 		
-		_oModel.onSelectionChange.add(function( oParticle :Particle ) {
-			_oView.updateSelection();
+		if ( o == null ) return;
+		
+		var oManualCrane = getMasterCrane().getComponent(ManualCrane);
+		if ( oManualCrane == null ) throw '!!!';
+		if ( oManualCrane.getContent() != null ) return;
+		oManualCrane.grab( o );
+		
+		_oGameState.removeComponent( o, Position );
+		_oGameState.onComponentUpdate.notify({
+			entity: getMasterCrane(),
+			component: cast oManualCrane,
 		});
+	}
+	
+	public function drop() {
+		var x = Math.floor( _oView.s2d.mouseX );
+		var y = Math.floor( _oView.s2d.mouseY );
+		
+		// Get crane content
+		var oManualCrane = getMasterCrane().getComponent(ManualCrane);
+		if ( oManualCrane == null ) throw '!!!';
+		if ( oManualCrane.getContent() == null ) return;
+		var o = oManualCrane.getContent();
+		
+		// Check drop location
+		var oBlocker = _oGameState.getPositionIndexer()
+			.getEntityByPosition( new Vector2i(x, y) );
+		if ( oBlocker != null ) return;
+		
+		// Release
+		oManualCrane.realease();
+		_oGameState.onComponentUpdate.notify({
+			entity: getMasterCrane(),
+			component: cast oManualCrane,
+		});
+		_oGameState.setComponent( o,new Position(x,y));
 	}
 }

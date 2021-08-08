@@ -4,11 +4,11 @@ import haxe.ds.BalancedTreeFunctor;
 import haxe.ds.List;
 import particle.controller.tool.CollisionHandler;
 import particle.model.Model;
-import particle.model.Particle;
-import particle.model.ParticleType;
+import particle.entity.Particle;
+import particle.entity.ParticleType;
 import particle.view.View;
 import space.Vector2i;
-import particle.model.Direction;
+import particle.tool.Direction;
 import sweet.functor.IProcedure;
 import haxe.ds.ArraySort;
 

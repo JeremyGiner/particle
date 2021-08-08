@@ -1,10 +1,11 @@
 package particle.controller.process;
 import particle.controller.AController;
-import particle.model.Particle;
+import particle.entity.Particle;
+import particle.tool.Direction;
 import space.Vector2i;
 import sweet.functor.IProcedure;
-import particle.model.ParticleType;
-import particle.model.Direction.DirectionTool;
+import particle.entity.ParticleType;
+import particle.tool.Direction.DirectionTool;
 
 /**
  * ...

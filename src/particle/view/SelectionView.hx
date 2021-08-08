@@ -1,9 +1,9 @@
 package particle.view;
-import particle.model.Direction;
-import particle.model.Particle;
-import pixi.core.display.Container;
-import pixi.core.graphics.Graphics;
-import particle.model.ParticleType;
+import h2d.Graphics;
+import h2d.Object;
+import particle.tool.Direction;
+import particle.entity.Particle;
+import particle.entity.ParticleType;
 import particle.view.pixi.Animation;
 import particle.view.View.AnimationInfo;
 import space.Vector2i;
@@ -12,10 +12,9 @@ import space.Vector2i;
  * ...
  * @author 
  */
-class SelectionView {
+class SelectionView extends Object {
 
 	var _oPosition :Vector2i;
-	var _oContainer :Graphics;
 	
 //_____________________________________________________________________________
 //	Constructor
@@ -23,32 +22,32 @@ class SelectionView {
 	
 	public function new() {
 		
-		_oContainer = new Graphics();
 		_oPosition = null;
-		
+		super();
 	}
 	
 //_____________________________________________________________________________
 //	Accessor
 	
-	public function getContainer() :Container {
-		return _oContainer;
+	public function getContainer() :Object {
+		return this;
 	}
 	
 //_____________________________________________________________________________
 //	Modifier
-	
+	/*
 	public function setPosition( oVector :Vector2i ) {
 		_oPosition = oVector;
 		update();
 	}
-	
+	*/
 	
 //_____________________________________________________________________________
 //	Updater
 	
 
 	public function update() {
+		/*
 		_oContainer.clear();
 		
 		if ( _oPosition == null ) 
@@ -59,17 +58,17 @@ class SelectionView {
 		_oContainer.position.set( 
 			_oPosition.x + 0.5,
 			_oPosition.y + 0.5
-		);
+		);*/
 	}
 	
 	public function drawSquare( o :Graphics, fSize :Float ) {
-		
+		/*
 		o.drawRect( 
 			-fSize / 2, 
 			-fSize / 2, 
 			fSize, 
 			fSize
-		);
+		);*/
 	}
 	
 }
