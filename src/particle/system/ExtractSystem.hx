@@ -1,6 +1,7 @@
 package particle.system;
 import legion.GameState;
 import legion.entity.IEntity;
+import particle.component.DirectionCompo;
 import particle.component.Extract;
 import particle.component.Position;
 import particle.entity.atom.RawSolid;
@@ -35,8 +36,11 @@ class ExtractSystem implements IProcedure {
 			var oPosition :Position = cast oEntity.getComponent(Position);
 			if ( oPosition == null ) continue;
 			
+			var oDirection :DirectionCompo = cast oEntity.getComponent(DirectionCompo);
+			if ( oPosition == null ) continue;
+			
 			// Get target entity
-			var vector = DirectionTool.getVector( oPosition.getDirection() );
+			var vector = oDirection.getVector();
 			var oTargetEntity = _oGameState.getPositionIndexer()
 				.getEntityByPosition( oPosition.clone().addVector( vector ) );
 			
@@ -44,9 +48,9 @@ class ExtractSystem implements IProcedure {
 			if ( oTargetEntity == null ) return;
 			
 			// Get target location
-			var oTargetLocation = DirectionTool.getVector( DirectionTool.getReverse(oPosition.getDirection()) );
+			var oTargetLocation = oDirection.getReverseVector();
 			
-			extract( oTargetEntity, oTargetLocation);
+			extract( oTargetEntity, oPosition.clone().addVector(oTargetLocation));
 		}
 		
 	}

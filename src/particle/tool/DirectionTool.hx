@@ -42,10 +42,11 @@ class DirectionTool {
 		}
 	}
 	
-	static public function toRadian( oDirection :Direction ) {
+	static public function toRadian( oDirection :Direction ) :Float {
 		
 		switch( oDirection ) {
-			case UP: return 1.5708;
+			//case UP: return 1.5708;
+			case UP: return 0.0;
 			case DOWN: return -1.5708;
 			case RIGHT: return 0;
 			case LEFT: return 3.14159;

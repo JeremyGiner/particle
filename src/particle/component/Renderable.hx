@@ -3,7 +3,9 @@ import h2d.Object;
 import legion.component.AComponent;
 import legion.component.IComponent;
 import particle.entity.Atom;
+import particle.entity.atom.Belt;
 import particle.view.entity.AEntityView;
+import particle.view.entity.BeltView;
 import particle.view.entity.MasterCraneView;
 import particle.entity.atom.MasterCrane;
 import particle.view.entity.RawSolidView;
@@ -26,6 +28,8 @@ class Renderable extends AComponent {
 		
 		if ( Std.is( _o, MasterCrane ) ) {
 			return new MasterCraneView(cast _o);
+		} else if ( Std.is( _o, Belt ) ) {
+			return new BeltView(cast _o);
 		} else if ( Std.is( _o, Atom ) ) {
 			return new RawSolidView(cast _o);
 		}

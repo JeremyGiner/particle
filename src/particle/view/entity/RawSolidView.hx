@@ -6,8 +6,11 @@ import h3d.mat.Texture;
 import legion.component.IComponent;
 import legion.entity.IEntity;
 import particle.component.Position;
+import particle.tool.StringStream;
 import particle.view.pixi.Animation;
 import particle.view.AnimationInfo;
+import space.Vector2f;
+import sys.io.File;
 import trigger.IObserver;
 
 /**
@@ -71,10 +74,68 @@ class RawSolidView extends AEntityView {
 	
 	public function createBody() {
 		
-		// Default box
+		
 		var _oBody = new Graphics();
+		
+		//__________________
+		/*
+		var s = File.getContent('res/test.svg');
+		var xml = Xml.parse( s );
+		
+		
+		function getFirst<C>( o :Iterator<C> ) :C {
+			if ( ! o.hasNext() ) throw '!!!';
+			return o.next();
+		}
+		var oSvg = getFirst( xml.elementsNamed('svg') );
+		var oDefs = getFirst( oSvg.elementsNamed('defs') );
+		var oGroup = getFirst( oSvg.elementsNamed('g') );
+		for ( oChild in oGroup.elements() ) {
+			if ( oChild.nodeName == 'rect' ) {
+				_oBody.beginFill( 0xFF0000, 1 );// TODO
+				_oBody.drawRect(
+					Std.parseInt( oChild.get('x') ),
+					Std.parseInt( oChild.get('y') ),
+					Std.parseInt( oChild.get('height') ),
+					Std.parseInt( oChild.get('width') )
+				);
+				_oBody.endFill();
+			}
+			if ( oChild.nodeName == 'path' ) {
+				
+				var oFirstPoint = null;
+				_oBody.beginFill( 0xFF0000, 1 );// TODO
+				var s = new StringStream( oChild.get('d') );
+				s.ignoreWhitespace();
+				trace( s.getRemaining() );
+				switch( s.read(1) ) {
+					case 'M':
+						while( StringStream.isNum( s.charAt(0) )  ) {
+							s.ignoreWhitespace();
+							var x = Std.parseFloat( s.getNextFloat() );
+							s.ignoreWhitespace();
+							s.eat(',');
+							s.ignoreWhitespace();
+							var y = Std.parseFloat( s.getNextFloat() );
+							
+							if ( oFirstPoint == null )
+								oFirstPoint = new Vector2f(x,y);
+							_oBody.moveTo( x, y );
+						}
+					case 'Z':
+						_oBody.moveTo( oFirstPoint.x, oFirstPoint.y );
+					default:
+						throw 'Invalid '+s.getRemaining();
+				}
+				_oBody.endFill();
+			}
+		}*/
+		
+		//__________________
+		// Default box
+		
 		_oBody.beginFill(getTypeColor(), 1);
-		_oBody.drawRect( 0,0,1,1);
+		_oBody.drawRect( -0.5,-0.5,1,1);
 		_oBody.endFill();
 		
 		var tf = new Text(hxd.res.DefaultFont.get());

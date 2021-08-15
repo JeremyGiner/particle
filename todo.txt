@@ -42,6 +42,15 @@ scenario
 	traveler
 		- create compass, travel toward goal
 	
+
+RECIPE
+bar = liquid metal
+plate = liquid metal
+cylinder = plate
+piston = X bar + cylinder + plate
+
+leg = X piston + Y bar + plate
+
 ________________________
 
 MATTER

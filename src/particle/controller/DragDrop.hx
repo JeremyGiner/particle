@@ -1,6 +1,7 @@
 package particle.controller;
 import legion.entity.IEntity;
 import particle.ParticleGameState;
+import particle.component.DirectionCompo;
 import particle.component.ManualCrane;
 import particle.entity.atom.MasterCrane;
 import particle.view.HeapsApp;
@@ -35,6 +36,10 @@ class DragDrop {
 			// On realease right click
 			if ( event.kind == EventKind.ERelease && event.button == 0 )
 				return drop();
+			
+			// On press R			
+			if ( event.kind == EventKind.EKeyDown && event.keyCode == 'R'.charCodeAt(0) )
+				return rotate();
 		});
 	}
 	
@@ -90,5 +95,26 @@ class DragDrop {
 			component: cast oManualCrane,
 		});
 		_oGameState.setComponent( o,new Position(x,y));
+	}
+	
+	public function rotate() {
+		
+		// Get crane content
+		var oManualCrane :ManualCrane = getMasterCrane().getComponent(ManualCrane);
+		if ( oManualCrane == null ) throw '!!!';
+		var o = oManualCrane.getContent();
+		if ( o == null ) return;
+		
+		// Get Direction compo
+		var oDirection :DirectionCompo = o.getComponent(DirectionCompo);
+		if ( oDirection == null ) return;
+		
+		// Rotate
+		oDirection.rotateClockwise();
+		_oGameState.onComponentUpdate.notify({
+			entity: o,
+			component: oDirection,
+		});
+		
 	}
 }

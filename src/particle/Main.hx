@@ -5,9 +5,11 @@ import legion.GameState;
 import legion.system.Render;
 import particle.controller.DragDrop;
 import particle.controller.Zoom;
+import particle.entity.atom.Belt;
 import particle.entity.atom.Extractor;
 import particle.entity.atom.MasterCrane;
 import particle.entity.atom.RawSolid;
+import particle.tool.Direction;
 import particle.tool.Matter;
 import particle.view.HeapsApp;
 import space.Vector2i;
@@ -16,6 +18,7 @@ import haxe.ds.IntMap;
 import sweet.functor.IProcedure;
 import legion.entity.IEntity;
 import particle.entity.Worldmap;
+import sys.io.File;
 
 
 /**
@@ -35,6 +38,7 @@ class Main extends HeapsApp {
 // Boot
 
 	static public function main() {
+		
 		_oInstance = new Main();
 	}
 	
@@ -59,6 +63,7 @@ class Main extends HeapsApp {
 		_oGame.addEntity( new Worldmap() );
 		_oGame.addEntity( new MasterCrane( new Vector2i() ) );
 		_oGame.addEntity( new Extractor( new Vector2i(2,0) ) );
+		_oGame.addEntity( new Belt( new Vector2i(3,0), Direction.RIGHT ) );
 		_oGame.addEntity( new RawSolid( new Vector2i( 1, 0 ), [
 			Matter.rock,
 			Matter.sand,

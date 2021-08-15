@@ -1,5 +1,4 @@
 package particle.tool;
-import space.Vector2i;
 
 /**
  * @author 

@@ -1,5 +1,6 @@
 package particle.entity;
 import h2d.Object;
+import particle.component.DirectionCompo;
 import particle.component.Position;
 import legion.entity.AEntity;
 import particle.component.Renderable;
@@ -23,7 +24,8 @@ class Atom extends AEntity {
 	) {
 		super();
 		
-		setComponent( new Position(oPosition.x,oPosition.y,oDirection) );
+		setComponent( new Position(oPosition.x,oPosition.y) );
+		setComponent( new DirectionCompo(oDirection) );
 		
 		//setComponent( new Stats() );
 		setComponent( new Renderable( this ) );

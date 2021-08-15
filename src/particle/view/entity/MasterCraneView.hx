@@ -37,7 +37,7 @@ class MasterCraneView extends AEntityView {
 		// Draw base
 		var oBody = new Graphics();
 		oBody.beginFill(0x00FF00);
-		oBody.drawRect(0.4, 0, 0.2, 1);
+		oBody.drawRect(0.4-0.5, -0.5, 0.2, 1);
 		oBody.endFill();
 		this.addChild(oBody);
 		
